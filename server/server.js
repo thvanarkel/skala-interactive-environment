@@ -6,79 +6,80 @@ var serialPort = new SerialPort("COM7", {
 	baudrate: 9600
 });
 
-var MAX_DIST = 0.5,
-	MOVEMENT_TIME = 40;
+var MAX_DIST = 0.3,
+	MOVEMENT_TIME = 30;
 
 var S_IDLE = 0,
 	S_RUSTLE = 4,
 	S_SWING = 1;
-S_FLAP = 2;
+	S_FLAP = 2;
 
 var servos = [{
 	id: 0,
-	x: 0.8,
-	y: 1 - 0.1,
+	x: 0.87,
+	y: 0.9,
 	state: S_IDLE
 }, {
 	id: 1,
-	x: 0.75,
-	y: 1 - 0.1,
+	x: 0.775,
+	y: 0.9,
 	state: S_IDLE
 }, {
 	id: 2,
-	x: 0.2,
-	y: 1 - 0.15,
+	x: 0.47,
+	y: 0.83,
 	state: S_IDLE
 }, {
 	id: 3,
-	x: 0.1,
-	y: 1 - 0.15,
-	state: S_IDLE
-}, {
-	id: 4,
-	x: 0.75,
-	y: 1 - 0.5,
+	x: 0.35,
+	y: 0.8,
 	state: S_IDLE
 }, {
 	id: 5,
-	x: 0.5,
-	y: 1 - 0.5,
+	x: 0.80,
+	y: 0.54,
 	state: S_IDLE
 }, {
-	id: 6,
-	x: 0.25,
-	y: 1 - 1,
-	state: S_IDLE
-}, {
-	id: 7,
-	x: 0.45,
-	y: 1 - 1,
-	state: S_IDLE
-}, {
-	id: 8,
-	x: 0.1,
-	y: 1 - 1,
-	state: S_IDLE
-}, {
-	id: 9,
-	x: 0,
-	y: 1 - 1,
+	id: 4,
+	x: 0.59,
+	y: 0.49,
 	state: S_IDLE
 }, {
 	id: 10,
-	x: 0.8,
-	y: 1 - 1,
+	x: 0.86,
+	y: 0.06,
 	state: S_IDLE
-}, ];
+}, {
+	id: 7,
+	x: 0.59,
+	y: 0.15,
+	state: S_IDLE
+}, {
+	id: 6,
+	x: 0.5,
+	y: 0.16,
+	state: S_IDLE
+}, {
+	id: 8,
+	x: 0.35,
+	y: 0.3,
+	state: S_IDLE
+}, {
+	id: 9,
+	x: 0.29,
+	y: 0.305,
+	state: S_IDLE
+}];
 
 var users = {};
 
 function minDistance(user, servo) {
 	return _.min([
-		dist(user.boundingRectX, user.boundingRectY, servo.x, servo.y),
-		dist(user.boundingRectX, user.boundingRectY + user.boundingRectHeight, servo.x, servo.y),
-		dist(user.boundingRectX + user.boundingRectWidth, user.boundingRectY, servo.x, servo.y),
-		dist(user.boundingRectX + user.boundingRectWidth, user.boundingRectY + user.boundingRectHeight, servo.x, servo.y)
+		// dist(user.boundingRectX, user.boundingRectY, servo.x, servo.y),
+		// dist(user.boundingRectX, user.boundingRectY + user.boundingRectHeight, servo.x, servo.y),
+		// dist((user.centroidX + user.highestX + user.highestX + user.highestX)/4, user.centroidY, servo.x, servo.y),
+		// dist(user.highestX, user.centroidY, servo.x, servo.y),
+		dist(user.boundingRectX + user.boundingRectWidth, user.centroidY, servo.x, servo.y)
 	]);
 }
 
@@ -145,7 +146,7 @@ function loop() {
 		user.timer = Math.min(user.timer, MOVEMENT_TIME);
 		user.timer = Math.max(user.timer, 0);
 
-		console.log(user.pid + ": " + user.timer);
+		console.log(user.pid + ": " + (user.boundingRectX + user.boundingRectWidth));
 
 		_.each(servos, function(servo, id) {
 			var dist = distance(user, servo);
@@ -156,7 +157,10 @@ function loop() {
 						i = 1 - Math.abs(d - t);
 					rustle(servo, i);
 				} else {
-					if (d < 0.2) {
+					var closest = _.first(_.sortBy(servos, function(s,i){
+						return distance(user, s)
+					}));
+					if (servo.id == closest.id) {
 						flap(servo);
 					} else {
 						idle(servo);
@@ -167,7 +171,6 @@ function loop() {
 			}
 		})
 	});
-
 
 	_.each(servos, function(servo, id) {
 		// if(servo.state !== S_IDLE)
@@ -187,7 +190,7 @@ function idle(servo) {
 
 function rustle(servo, i) {
 	if (servo.state > S_RUSTLE) return;
-	console.log('rustling ', servo.id, i);
+	// console.log('rustling ', servo.id, i);
 	servo.state = S_RUSTLE;
 
 }
