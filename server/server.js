@@ -161,6 +161,7 @@ function loop() {
 						return distance(user, s)
 					}));
 					if (servo.id == closest.id) {
+						user.timer = 0;
 						flap(servo);
 					} else {
 						idle(servo);
@@ -245,5 +246,5 @@ oscServer.on("message", function(msg, rinfo) {
 
 serialPort.on("open", function() {
 	console.log('open');
-	setInterval(loop, 1000);
+	setInterval(loop, 1500);
 })
