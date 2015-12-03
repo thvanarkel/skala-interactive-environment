@@ -28,6 +28,10 @@ const byte RUSTLE_ANGLE = 50;
 
 const byte BUZZING_DELAY = 50;
 const byte BUZZING_ANGLE = 10;
+
+const byte CASCADE_DELAY = 1100;
+const byte CASCADE_ANGLE = 180;
+
 //
 
 byte sturen = 1;
@@ -35,8 +39,8 @@ byte sturen = 1;
 struct aServo {
   byte state;
   byte angle;
-  bool didTurn;
-  unsigned long previousMovement;
+//  bool didTurn;
+  unsigned long lockTime;
 };
 
 struct aServo servos[NUM_SERVOS];
@@ -51,28 +55,14 @@ void setup() {
     struct aServo servo;
     servo.state = stateLadderNormal;
     servo.angle = 0;
-    servo.previousMovement = millis();
-    servo.didTurn = false;
+    servo.lockTime = millis();
     servos[i] = servo;
   }
 }
 
 void getMessage() {
-  //GET DATA FROM SERIAL input, so thru the USB cable
+  //GET DATA FROM SERIAL input, so thru the USB cable  
 
-  //fake input WORKS!:
-  
-  for (byte i = 0; i < NUM_SERVOS; i++) {
-    for (byte j = 0; j < NUM_SERVOS; j++) {
-    setState(j, stateLadderBuzzing);
-    }
-    setState(i, stateLadderBuzzing);
-    updateServos();
-    delay(3000);
-  }
-  
-
-  /*
   if(Serial.available()){
   #define MAX_MILLIS_TO_WAIT 1000  //or whatever
   byte numBytes = 2; // expects 2 bytes
@@ -97,7 +87,6 @@ void getMessage() {
     setState(globalServoId, state);
 
   }
-  */
 }
 
 void updateServos() {
@@ -105,17 +94,20 @@ void updateServos() {
     struct aServo servo = servos[i];
     switch (servo.state) {
       case stateLadderNormal:
-        if (servo.angle > 90) {
-          servo.angle = 180;
-        } else {
-          servo.angle = 0;
+        if (millis() > servo.lockTime) {
+          if (servo.angle > 90) {
+            servo.angle = 180;
+          } else {
+            servo.angle = 0;
+          }
+          servo.lockTime = millis();
+          sendCommand(servoArray[i][0], servoArray[i][1], servo.angle);
         }
-        sendCommand(servoArray[i][0], servoArray[i][1], servo.angle);
         break;
 
       case stateLadderRustling:
         //        Serial.println("State rustling");
-        if (millis() - servo.previousMovement > RUSTLE_DELAY) {
+        if (millis() > servo.lockTime) {
           if (servo.angle > 90) {
             if (servo.angle == 180) {
               servo.angle = 180 - RUSTLE_ANGLE;
@@ -129,20 +121,20 @@ void updateServos() {
               servo.angle = 0;
             }
           }
-          servo.previousMovement = millis();
+          servo.lockTime = millis() + RUSTLE_DELAY;
           sendCommand(servoArray[i][0], servoArray[i][1], servo.angle);
         }
         break;
 
       case stateLadderCascading:
         //Serial.println("State cascading");
-        if (!servo.didTurn) {
+        if (millis() > servo.lockTime) {
           if (servo.angle > 90) {
             servo.angle = 0;
           } else {
-            servo.angle = 180;
+            servo.angle = CASCADE_ANGLE;
           }
-          servo.didTurn = true;
+          servo.lockTime = millis() + CASCADE_DELAY;
           sendCommand(servoArray[i][0], servoArray[i][1], servo.angle);
         }
 
@@ -150,7 +142,7 @@ void updateServos() {
 
       case stateLadderBuzzing:
         //        Serial.println("State buzzing");
-        if (millis() - servo.previousMovement > BUZZING_DELAY) {
+        if (millis() > servo.lockTime) {
           if (servo.angle > 90) {
             if (servo.angle == 180) {
               servo.angle = 180 - BUZZING_ANGLE;
@@ -164,11 +156,12 @@ void updateServos() {
               servo.angle = 0;
             }
           }
-          servo.previousMovement = millis();
+          servo.lockTime = millis() + BUZZING_DELAY;
           sendCommand(servoArray[i][0], servoArray[i][1], servo.angle);
         }
         break;
     }
+    
     Serial.print("\n New State: ");
     Serial.println(servo.state);
     servos[i] = servo;
@@ -197,7 +190,7 @@ void setState(byte globalServoId, byte state) {
   servo.state = state;
 //  Serial.print(", new state: ");
 //  Serial.print(servo.state);
-  servo.didTurn = false;
+//  servo.didTurn = false;
   servos[globalServoId] = servo;
 }
 

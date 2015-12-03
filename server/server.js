@@ -7,7 +7,8 @@ var serialPort = new SerialPort("COM7", {
 });
 
 var MAX_DIST = 0.3,
-	MOVEMENT_TIME = 30;
+	MOVEMENT_TIME = 30,
+	NUM_LADDERS = 11;
 
 var S_IDLE = 0,
 	S_RUSTLE = 4,
@@ -133,7 +134,6 @@ function loop() {
 			user.timer -= ((x + y) / 2);
 		}
 
-
 		// var x = user.velocityX;
 		// var y = user.velocityY;
 
@@ -143,39 +143,35 @@ function loop() {
 		// 	user.timer -= (x + y) / 2;
 		// }
 
-		user.timer = Math.min(user.timer, MOVEMENT_TIME);
-		user.timer = Math.max(user.timer, 0);
 
-		console.log(user.pid + ": " + (user.boundingRectX + user.boundingRectWidth));
+		user.timer = Math.max(Math.min(user.timer, MOVEMENT_TIME), 0);
+if(user.dx + user.dy > 4){
+			user.timer -= (user.dx + user.dy)/2;
+		} else {
+			user.timer += 5;
+		}
 
-		_.each(servos, function(servo, id) {
-			var dist = distance(user, servo);
-			if (dist < MAX_DIST) {
-				var d = 1 - (MAX_DIST - dist) / MAX_DIST;
-				if (user.timer < MOVEMENT_TIME) {
-					var t = (MOVEMENT_TIME - user.timer) / MOVEMENT_TIME,
-						i = 1 - Math.abs(d - t);
-					rustle(servo, i);
-				} else {
-					var closest = _.first(_.sortBy(servos, function(s,i){
-						return distance(user, s)
-					}));
-					if (servo.id == closest.id) {
-						user.timer = 0;
-						flap(servo);
-					} else {
-						idle(servo);
-					}
-				}
-			} else {
-				idle(servo);
-			}
-		})
+		user.timer = Math.max(Math.min(user.timer, 100), 0);
+
+		var sorted = _.slice(_.sortBy(servos, function(servo) {
+			return distance(user, servo);
+		}), 0, 10);
+		
+		var ladderIdx = NUM_LADDERS - Math.floor(user.timer/(NUM_LADDERS - 1)) - 1;
+		var flapper = sorted[ladderIdx];
+
+		console.log(ladderIdx);
+
+		if(ladderIdx < 1){
+			flap(flapper);
+		} else if(ladderIdx < 4){
+			swing(flapper);
+		} else {
+			rustle(flapper);
+		}
 	});
 
 	_.each(servos, function(servo, id) {
-		// if(servo.state !== S_IDLE)
-		// console.log(message);
 		var message = new Buffer([servo.id, servo.state]);
 		serialPort.write(message);
 	});
@@ -193,7 +189,15 @@ function rustle(servo, i) {
 	if (servo.state > S_RUSTLE) return;
 	// console.log('rustling ', servo.id, i);
 	servo.state = S_RUSTLE;
+}
 
+function swing(servo) {
+	if (servo.state > S_SWING) return;
+	$(servo).toggleClass('rustling', false);
+	$(servo).toggleClass('swinging', true);
+	$(servo).toggleClass('flapping', false);
+	console.log('swinging ', servo.id, i);
+	servo.state = S_SWING;
 }
 
 function flap(servo) {
