@@ -1,5 +1,8 @@
 /*
- *
+ * JacobsLadder.cpp - Library for controlling JacobsLadder objects
+ * in the SKALA prototype.
+ * Written by Thomas van Arkel.
+ * Last updated: Dec 5, 2015.
  */
 
 #include "Arduino.h"
