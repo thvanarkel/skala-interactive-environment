@@ -1,3 +1,5 @@
+#include <Servo.h>
+
 /*
  * JacobsLadder.cpp - Library for controlling JacobsLadder objects
  * in the SKALA prototype. Apart from including the JacobsLadder.h library
@@ -20,4 +22,6 @@ class JacobsLadder {
     int _pin;
     int _angle;
     Servo _servo;
-}
+};
+
+#endif
