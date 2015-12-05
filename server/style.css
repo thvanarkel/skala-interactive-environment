@@ -8,6 +8,11 @@
     to {transform:rotate(5deg);}
 }
 
+@keyframes swing {
+    from {transform:rotate(-5deg);}
+    to {transform:rotate(5deg);}
+}
+
 body {
 	width: 100%;
 	height: 100%;
@@ -17,8 +22,8 @@ body {
 }
 
 #container {
-	width: 1005px;
-	height: 1005px;
+	width: 965px;
+	height: 965px;
 	position: relative;
 	margin: auto;
 }
@@ -27,7 +32,7 @@ body {
 	width: 46px;
 	height: 46px;
 	float: left;
-	position: relative;
+	/*position: relative;*/
 	border: 1px solid #fff;
 	padding: 0;
 	margin: 0;
@@ -38,7 +43,7 @@ body {
 }
 
 .hasLadder {
-	background-color: #f00 !important;
+	background-color: #fdd !important;
 }
 
 .flapping {
@@ -46,9 +51,16 @@ body {
 	animation-duration: 1s;
 }
 
+.swinging {
+	background-color: #fad !important;
+	animation-name: swing !important;
+	animation-duration: 0.5s;
+	animation-iteration-count: 3;
+}
+
 .rustling {
-	background-color: #ff0 !important;
-	animation-name: rustle;
+	background-color: #f5d !important;
+	animation-name: rustle !important;
 	animation-duration: 0.5s;
 	animation-iteration-count: 3;
 }
