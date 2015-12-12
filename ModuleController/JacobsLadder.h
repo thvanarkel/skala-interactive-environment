@@ -14,14 +14,33 @@
 
 #include "Arduino.h"
 
+enum LadderMovement
+{
+  None,
+  Rustle,
+  Cascade
+};
+
 class JacobsLadder {
   public:
     JacobsLadder(int pin);
-    void setAngle(int angle);
+    //Returns whether the movement has finished or not
+    bool rustle();
+    bool cascade();
   private:
+    bool stepTowardsDestination();
+    
     int _pin;
-    int _angle;
+    int _currentAngle;
+    int _destinationAngle;
     Servo _servo;
+    bool _didStart = false;
+    int _movementPhase = 0;
+    bool _movingClockwise = true;
+
+    const int MIN_PULSE = 544;
+    const int MAX_PULSE = 2400;
+
 };
 
 #endif

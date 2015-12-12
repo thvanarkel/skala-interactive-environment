@@ -11,12 +11,65 @@
 
 JacobsLadder::JacobsLadder(int pin)
 {
-  _pin = pin;
-  _servo.attach(_pin);
+  _servo.attach(_pin, MIN_PULSE, MAX_PULSE);
+  _servo.write(0);
 }
 
-void JacobsLadder::setAngle(int angle)
-{
-  _angle = angle;
-  _servo.write(_angle);
+bool JacobsLadder::rustle() {
+  if (!_didStart) {
+    if (_currentAngle > 90) {
+      _destinationAngle = 180;
+    } else {
+
+    }
+  }
+  if (_currentAngle < _destinationAngle) {
+    _currentAngle += 5;
+    _servo.write(_currentAngle);
+  }
 }
+
+
+bool JacobsLadder::cascade() {
+  if (!_didStart) {
+    _movementPhase = 0;
+    _didStart = true;
+  } else {
+    switch (_movementPhase) {
+      case 0:
+        if (_currentAngle > 90) {
+          _destinationAngle = 0;
+        } else {
+          _destinationAngle = 180;
+        }
+        stepTowardsDestination();
+        break;
+
+      case 1:
+
+        break;
+
+      case 2:
+        _didStart = false;
+        return true;
+        break;
+
+      default:
+        return false;
+        break;
+    }
+  }
+  return false;
+}
+
+
+bool JacobsLadder::stepTowardsDestination() {
+  if (_destinationAngle > _currentAngle) {
+
+  } else if (_destinationAngle < _currentAngle) {
+
+  } else if (_destinationAngle == _currentAngle) {
+
+  }
+}
+
