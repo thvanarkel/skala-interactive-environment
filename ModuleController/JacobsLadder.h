@@ -25,21 +25,22 @@ class JacobsLadder {
   public:
     JacobsLadder(int pin);
     //Returns whether the movement has finished or not
-    bool rustle();
     bool cascade();
+    bool tease();
   private:
-    bool stepTowardsDestination();
+    int nextAngleToDestination();
+    void reset();
     
     int _pin;
-    int _currentAngle;
+    int _angle;
     int _destinationAngle;
     Servo _servo;
-    bool _didStart = false;
     int _movementPhase = 0;
-    bool _movingClockwise = true;
+    long _lastUpdated = millis();
+    int _updateDelay;
 
-    const int MIN_PULSE = 544;
-    const int MAX_PULSE = 2400;
+    const int MIN_PULSE = 500;
+    const int MAX_PULSE = 2500;
 
 };
 

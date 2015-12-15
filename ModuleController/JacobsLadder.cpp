@@ -15,61 +15,89 @@ JacobsLadder::JacobsLadder(int pin)
   _servo.write(0);
 }
 
-bool JacobsLadder::rustle() {
-  if (!_didStart) {
-    if (_currentAngle > 90) {
-      _destinationAngle = 180;
-    } else {
-
-    }
-  }
-  if (_currentAngle < _destinationAngle) {
-    _currentAngle += 5;
-    _servo.write(_currentAngle);
-  }
-}
-
-
 bool JacobsLadder::cascade() {
-  if (!_didStart) {
-    _movementPhase = 0;
-    _didStart = true;
-  } else {
+  bool finished = false;
+  if (millis() - _lastUpdated > _updateDelay) {
     switch (_movementPhase) {
       case 0:
-        if (_currentAngle > 90) {
+        _updateDelay = 50;
+        if (_angle > 90) {
           _destinationAngle = 0;
         } else {
           _destinationAngle = 180;
         }
-        stepTowardsDestination();
+        _movementPhase++;
+        finished = false;
         break;
 
       case 1:
+        _servo.write(nextAngleToDestination());
+        if (_angle == _destinationAngle) {
+          reset();
+          finished = true;
+        } else {
+          finished = false;
+        }
+        break;
+    }
+    _lastUpdated = millis();
+  }
+  return finished;
+}
 
+bool JacobsLadder::tease() {
+  bool finished = false;
+  if (millis() - _lastUpdated > _updateDelay) {
+    switch (_movementPhase) {
+      case 0:
+        _updateDelay = 50;
+        if (_angle > 90) {
+          _destinationAngle = 180 - random(120, 140);
+        } else {
+          _destinationAngle = random(120, 140);
+        }
+        _movementPhase++;
+        finished = false;
+        break;
+
+      case 1:
+        _servo.write(nextAngleToDestination());
+        if (_angle == _destinationAngle) {
+          if (_destinationAngle >= 90) {
+            _destinationAngle = 0; 
+          } else {
+            _destinationAngle = 180;
+          }
+          _movementPhase++;
+        }
+        finished = false;
         break;
 
       case 2:
-        _didStart = false;
-        return true;
-        break;
-
-      default:
-        return false;
+        _servo.write(nextAngleToDestination());
+        if (_angle == _destinationAngle) {
+          reset();
+          finished = true;
+        } else {
+          finished = false;
+        }
         break;
     }
+    _lastUpdated = millis();
   }
-  return false;
+  return finished;
 }
 
-
-bool JacobsLadder::stepTowardsDestination() {
-  if (_destinationAngle > _currentAngle) {
-
-  } else if (_destinationAngle < _currentAngle) {
-
-  } else if (_destinationAngle == _currentAngle) {
-
-  }
+void JacobsLadder::reset() {
+  _movementPhase = 0;
+  _updateDelay = 50;
 }
 
+int JacobsLadder::nextAngleToDestination() {
+  if (_destinationAngle > _angle) {
+    _angle++;
+  } else if (_destinationAngle < _angle) {
+    _angle--;
+  }
+  return _angle;
+}
