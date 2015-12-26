@@ -5,7 +5,7 @@
  * in the SKALA prototype. Apart from including the JacobsLadder.h library
  * it is also required to include the Servo.h library
  * Written by Thomas van Arkel
- * Last updated: Dec 5, 2015
+ * Last updated: Dec 26, 2015
  * This work is licensed under a Creative Commons Attribution 4.0 International License
  */
 
@@ -14,19 +14,15 @@
 
 #include "Arduino.h"
 
-enum LadderMovement
-{
-  None,
-  Rustle,
-  Cascade
-};
+
 
 class JacobsLadder {
   public:
-    JacobsLadder(int pin);
+    void init(int pin);
     //Returns whether the movement has finished or not
     bool cascade();
     bool tease();
+    bool wait(int aDelay);
   private:
     int nextAngleToDestination();
     void reset();
@@ -36,7 +32,7 @@ class JacobsLadder {
     int _destinationAngle;
     Servo _servo;
     int _movementPhase = 0;
-    long _lastUpdated = millis();
+    unsigned long _lastUpdated = millis();
     int _updateDelay;
 
     const int MIN_PULSE = 500;

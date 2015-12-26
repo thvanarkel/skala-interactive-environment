@@ -2,17 +2,32 @@
  * JacobsLadder.cpp - Library for controlling JacobsLadder objects
  * in the SKALA prototype
  * Written by Thomas van Arkel
- * Last updated: Dec 5, 2015
+ * Last updated: Dec 26, 2015
  * This work is licensed under a Creative Commons Attribution 4.0 International License
  */
 
 #include "Arduino.h"
 #include "JacobsLadder.h"
 
-JacobsLadder::JacobsLadder(int pin)
+void JacobsLadder::init(int pin)
 {
   _servo.attach(_pin, MIN_PULSE, MAX_PULSE);
   _servo.write(0);
+}
+
+bool JacobsLadder::wait(int aDelay) {
+  if (millis() - _lastUpdated > _updateDelay) {
+    switch(_movementPhase) {
+      case 0:
+        _updateDelay = _aDelay;
+        _movementPhase++;
+        break;
+      case 1:
+        reset();
+        return true;
+    }
+    _lastUpdated = millis();
+  }
 }
 
 bool JacobsLadder::cascade() {
