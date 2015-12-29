@@ -14,8 +14,6 @@
 
 #include "Arduino.h"
 
-
-
 class JacobsLadder {
   public:
     void init(int pin);
@@ -35,9 +33,8 @@ class JacobsLadder {
     unsigned long _lastUpdated = millis();
     int _updateDelay;
 
-    const int MIN_PULSE = 500;
-    const int MAX_PULSE = 2500;
-
+    //const int MIN_PULSE = 500;
+    //const int MAX_PULSE = 2500;
 };
 
 #endif

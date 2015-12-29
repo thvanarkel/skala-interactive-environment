@@ -5,7 +5,8 @@
 ///////////////////////
 //  SETUP VARIABLES  //
 ///////////////////////
-const int NUM_NODES = 5;
+const int NUM_NODES = 1;
+const int START_PIN = 8;
 
 struct Node {
   int index;
@@ -43,6 +44,26 @@ void loop() {
   // TODO: Interpret message into changing node data
 
   // TODO: Update nodes (= calling motion functions)
+  for (int i = 0; i < NUM_NODES; i++) {
+    struct Node node = nodes[i];
+    if (!node.movementQueue.isEmpty()) {
+      int type = node.movementQueue.peek();
+      bool finished;
+      switch(type) {
+        case Wait:
+          finished = node.ladder.wait(1000);  // TODO: Allow parameters for movement to be sent
+          break;
+        case Cascade:
+          finished = node.ladder.cascade();
+          break;
+        case Tease:
+          finished = node.ladder.tease();
+          break;
+      }
+      if (finished) node.movementQueue.pop();
+    }
+    saveNode(node);
+  }
 }
 
 void saveNode(struct Node node) {

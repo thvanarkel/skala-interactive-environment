@@ -11,7 +11,7 @@
 
 void JacobsLadder::init(int pin)
 {
-  _servo.attach(_pin, MIN_PULSE, MAX_PULSE);
+  _servo.attach(_pin, 500, 2500);
   _servo.write(0);
 }
 
@@ -19,7 +19,7 @@ bool JacobsLadder::wait(int aDelay) {
   if (millis() - _lastUpdated > _updateDelay) {
     switch(_movementPhase) {
       case 0:
-        _updateDelay = _aDelay;
+        _updateDelay = aDelay;
         _movementPhase++;
         break;
       case 1:
