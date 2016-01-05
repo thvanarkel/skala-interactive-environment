@@ -5,8 +5,11 @@
 ///////////////////////
 //  SETUP VARIABLES  //
 ///////////////////////
+const int MODULE_ID = 0;
 const int NUM_NODES = 1;
 const int START_PIN = 8;
+
+const char CALIBRATED_MESSAGE = 'c';
 
 struct Node {
   int index;
@@ -16,6 +19,8 @@ struct Node {
 };
 
 Node nodes[NUM_NODES];
+
+bool moduleCalibrated;
 
 enum movementType
 {
@@ -34,11 +39,18 @@ void setup() {
     node.movementInProgress = false;
     saveNode(node);
   }
+  moduleCalibrated = false;
+  Serial.begin(9600);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
+  // TODO: Calibrate the system
+  if (!moduleCalibrated) {
+    calibrate();
+    moduleCalibrated = true;
+  }
   // TODO: Read input from computer over serial
 
   // TODO: Interpret message into changing node data
@@ -68,5 +80,25 @@ void loop() {
 
 void saveNode(struct Node node) {
   nodes[node.index] = node;
+}
+
+void calibrate() {
+  for (int i = 0; i < NUM_NODES; i++) {
+    struct Node node = nodes[i];
+    byte message[2] = {MODULE_ID, node.index};
+    Serial.write(message, 2);
+    bool didCalibrateNode = false;
+    while(!didCalibrateNode) {
+      bool finished = false;
+      while(!finished) {
+        finished = node.ladder.tease();
+      }
+      if (Serial.available() > 0) {
+        if (Serial.read() == CALIBRATED_MESSAGE) {
+          didCalibrateNode = true;
+        }
+      }
+    }
+  }
 }
 
