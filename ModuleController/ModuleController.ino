@@ -26,7 +26,8 @@ enum movementType
 {
   Wait = 0,
   Cascade = 1,
-  Tease = 2
+  Tease = 2,
+  Buzz = 3
 };
 
 void setup() {

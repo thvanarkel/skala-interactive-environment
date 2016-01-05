@@ -21,6 +21,7 @@ class JacobsLadder {
     bool cascade();
     bool tease();
     bool wait(int aDelay);
+    bool buzz();
   private:
     int nextAngleToDestination();
     void reset();
