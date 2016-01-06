@@ -14,19 +14,27 @@
 
 #include "Arduino.h"
 
+enum MovementType
+{
+  Wait = 0,
+  Cascade = 1,
+  Tease = 2,
+  Buzz = 3
+};
+
 class JacobsLadder {
   public:
     void init(int pin);
     //Returns whether the movement has finished or not
-    bool cascade();
-    bool tease();
+    void performMovement(MovementType type);
+    bool finished = true;
+  private:
+    void cascade();
+    void tease();
     bool wait(int aDelay);
     bool buzz();
-  private:
-    int nextAngleToDestination();
+    int nextAngleToDestination(int increment);
     void reset();
-    
-    int _pin;
     int _angle;
     int _destinationAngle;
     Servo _servo;

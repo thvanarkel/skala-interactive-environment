@@ -11,8 +11,32 @@
 
 void JacobsLadder::init(int pin)
 {
-  _servo.attach(_pin, 500, 2500);
+  _servo.attach(pin, 500, 2500);
   _servo.write(0);
+}
+
+void JacobsLadder::performMovement(MovementType type) {
+  switch(type) {
+      case Wait:
+        wait(1000);
+        break;
+
+      case Cascade:
+        cascade();
+        break;
+
+      case Tease:
+        tease();
+        break;
+
+      case Buzz:
+        buzz();
+        break;
+
+      default:
+        finished = true;
+        break;
+    }
 }
 
 bool JacobsLadder::wait(int aDelay) {
@@ -30,9 +54,9 @@ bool JacobsLadder::wait(int aDelay) {
   }
 }
 
-bool JacobsLadder::cascade() {
-  bool finished = false;
+void JacobsLadder::cascade() {
   if (millis() - _lastUpdated > _updateDelay) {
+    Serial.println("Next step");
     switch (_movementPhase) {
       case 0:
         _updateDelay = 50;
@@ -57,11 +81,9 @@ bool JacobsLadder::cascade() {
     }
     _lastUpdated = millis();
   }
-  return finished;
 }
 
-bool JacobsLadder::tease() {
-  bool finished = false;
+void JacobsLadder::tease() {
   if (millis() - _lastUpdated > _updateDelay) {
     switch (_movementPhase) {
       case 0:
@@ -100,7 +122,6 @@ bool JacobsLadder::tease() {
     }
     _lastUpdated = millis();
   }
-  return finished;
 }
 
 bool JacobsLadder::buzz() {

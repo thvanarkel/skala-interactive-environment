@@ -1,6 +1,7 @@
+#include <QueueArray.h>
 #include <Servo.h>
 #include "JacobsLadder.h"
-#include <QueueList.h>
+
 
 ///////////////////////
 //  SETUP VARIABLES  //
@@ -8,39 +9,30 @@
 const int MODULE_ID = 0;
 const int NUM_NODES = 1;
 const int START_PIN = 8;
+const int PINS[NUM_NODES] = {2};
 
-const char CALIBRATED_MESSAGE = 'c';
+const char CALIBRATE_START = 's';
+const char CALIBRATE_REGISTERED = 'c';
 
 struct Node {
   int index;
   JacobsLadder ladder;
-  QueueList <int> movementQueue;
-  bool movementInProgress;
+  QueueArray <MovementType> movementQueue;
 };
 
-Node nodes[NUM_NODES];
+Node* nodes[NUM_NODES];
 
 bool moduleCalibrated;
 
-enum movementType
-{
-  Wait = 0,
-  Cascade = 1,
-  Tease = 2,
-  Buzz = 3
-};
+
 
 void setup() {
   // put your setup code here, to run once:
   for (int i = 0; i < NUM_NODES; i++) {
     struct Node node;
     node.index = i;
-    node.ladder.init(i);
-    node.movementQueue;
-    node.movementInProgress = false;
-    saveNode(node);
+    node.ladder.init(PINS[i]);
   }
-  moduleCalibrated = false;
   Serial.begin(9600);
 }
 
@@ -48,58 +40,81 @@ void loop() {
   // put your main code here, to run repeatedly:
 
   // TODO: Calibrate the system
-  if (!moduleCalibrated) {
-    calibrate();
-    moduleCalibrated = true;
+  //  if (!moduleCalibrated) {
+  //    calibrate();
+  //    moduleCalibrated = true;
+  //  }
+  
+//  // TODO: Read input from computer over serial
+//  if (Serial.available() > 0) {
+//    if (Serial.read() == 's') {
+//      Serial.println("Cascade");
+//      addMovement(nodes[0], Cascade);
+//    }
+//  }
+//
+//  // TODO: Interpret message into changing node data
+//
+//  // TODO: Update nodes (= calling motion functions)
+//  //Serial.println(nodes[0].movementQueue.count());
+//  for (int i = 0; i < NUM_NODES; i++) {
+//    updateNode(nodes[i]);
+//  }
+
+  bool finished = false;
+  while(!finished) {
+     nodes[0]->ladder.performMovement(Cascade);
+     finished = nodes[0]->ladder.finished;
   }
-  // TODO: Read input from computer over serial
+}
 
-  // TODO: Interpret message into changing node data
-
-  // TODO: Update nodes (= calling motion functions)
-  for (int i = 0; i < NUM_NODES; i++) {
-    struct Node node = nodes[i];
-    if (!node.movementQueue.isEmpty()) {
-      int type = node.movementQueue.peek();
-      bool finished;
-      switch(type) {
-        case Wait:
-          finished = node.ladder.wait(1000);  // TODO: Allow parameters for movement to be sent
-          break;
-        case Cascade:
-          finished = node.ladder.cascade();
-          break;
-        case Tease:
-          finished = node.ladder.tease();
-          break;
-      }
-      if (finished) node.movementQueue.pop();
+void updateNode(struct Node* node) {
+  QueueArray <MovementType> queue = node->movementQueue;
+  if (!queue.isEmpty()) {
+    MovementType type = queue.peek();
+    JacobsLadder ladder = node->ladder;
+    ladder.performMovement(type);
+    if (ladder.finished) {
+      queue.pop();
     }
-    saveNode(node);
   }
 }
 
-void saveNode(struct Node node) {
-  nodes[node.index] = node;
+void addMovement(struct Node* node, MovementType type) {
+  QueueArray <MovementType> queue = node->movementQueue;
+  queue.push(type);
 }
 
-void calibrate() {
+/*void saveNode(struct Node node) {
+  nodes[node.index] = node;
+}*/
+
+/*void calibrate() {
   for (int i = 0; i < NUM_NODES; i++) {
     struct Node node = nodes[i];
     byte message[2] = {MODULE_ID, node.index};
     Serial.write(message, 2);
+    bool startAllowed = false;
+    while (!startAllowed) {
+      if (Serial.available() > 0) {
+        if (Serial.read() == CALIBRATE_START) {
+          startAllowed = true;
+        }
+      }
+    }
     bool didCalibrateNode = false;
-    while(!didCalibrateNode) {
+    while (!didCalibrateNode) {
       bool finished = false;
-      while(!finished) {
+      while (!finished) {
         finished = node.ladder.tease();
       }
       if (Serial.available() > 0) {
-        if (Serial.read() == CALIBRATED_MESSAGE) {
+        if (Serial.read() == CALIBRATE_REGISTERED) {
           didCalibrateNode = true;
         }
       }
     }
+    saveNode(node);
   }
-}
+}*/
 
