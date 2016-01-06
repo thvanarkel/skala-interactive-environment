@@ -9,177 +9,143 @@
 #include "Arduino.h"
 #include "JacobsLadder.h"
 
-void JacobsLadder::init(int pin)
+void JacobsLadder::init(int pin, int minPulse, int maxPulse)
 {
-  _servo.attach(pin, 500, 2500);
-  _servo.write(0);
+  servo.attach(pin, minPulse, maxPulse);
+  servo.write(0);
+  _angle = 0;
 }
 
-void JacobsLadder::performMovement(MovementType type) {
-  switch(type) {
-      case Wait:
-        wait(1000);
-        break;
+void JacobsLadder::addMovement(MovementType type, int velocity) {
+  switch (type) {
 
-      case Cascade:
-        cascade();
-        break;
+    case Cascade:
+      cascade(velocity);
+      break;
 
-      case Tease:
-        tease();
-        break;
+//    case Tease:
+//      tease();
+//      break;
 
-      case Buzz:
-        buzz();
-        break;
+    case Buzz:
+      buzz(velocity);
+      break;
 
-      default:
-        finished = true;
-        break;
-    }
-}
-
-bool JacobsLadder::wait(int aDelay) {
-  if (millis() - _lastUpdated > _updateDelay) {
-    switch(_movementPhase) {
-      case 0:
-        _updateDelay = aDelay;
-        _movementPhase++;
-        break;
-      case 1:
-        reset();
-        return true;
-    }
-    _lastUpdated = millis();
+    default:
+      break;
   }
 }
+
+void JacobsLadder::updateLadder() {
+  if (queue.isEmpty()) {
+    return;
+  }
+  Movement movement = queue.peek();
+  if (millis() - _lastUpdated < movement.updateDelay) {
+    return;
+  }
+  _angle = nextAngleToDestination(movement.destinationAngle);
+  servo.write(_angle);
+  if (_angle == movement.destinationAngle) {
+    queue.pop();
+  }
+  _lastUpdated = millis();
+}
+
+bool JacobsLadder::pause(int timeout = 0) {
+  return false;
+}
+
 
 void JacobsLadder::cascade() {
-  if (millis() - _lastUpdated > _updateDelay) {
-    Serial.println("Next step");
-    switch (_movementPhase) {
-      case 0:
-        _updateDelay = 50;
-        if (_angle > 90) {
-          _destinationAngle = 0;
-        } else {
-          _destinationAngle = 180;
-        }
-        _movementPhase++;
-        finished = false;
-        break;
-
-      case 1:
-        _servo.write(nextAngleToDestination(1));
-        if (_angle == _destinationAngle) {
-          reset();
-          finished = true;
-        } else {
-          finished = false;
-        }
-        break;
+  cascade(90);
+}
+void JacobsLadder::cascade(int velocity) {
+  if (hasPriority(Cascade)) {
+    struct Movement movement;
+    movement.type = Cascade;
+    movement.destinationAngle = 0;
+    int startingAngle = getFinalDestinationAngle();
+    if (startingAngle < 90) {
+      movement.destinationAngle = 180;
     }
-    _lastUpdated = millis();
+    movement.updateDelay = (velocity / 1000.0) * abs(movement.destinationAngle - startingAngle);
+    queue.push(movement);
   }
 }
 
-void JacobsLadder::tease() {
-  if (millis() - _lastUpdated > _updateDelay) {
-    switch (_movementPhase) {
-      case 0:
-        _updateDelay = 50;
-        if (_angle > 90) {
-          _destinationAngle = 180 - random(120, 140);
-        } else {
-          _destinationAngle = random(120, 140);
-        }
-        _movementPhase++;
-        finished = false;
-        break;
+void JacobsLadder::buzz(){
+  buzz(400);
+}
+void JacobsLadder::buzz(int velocity) {
+  const int buzzAngle = 50;
+  if (hasPriority(Buzz)) {
+    Serial.println("Buzzing");
+    resetPosition(Buzz, velocity);
 
-      case 1:
-        _servo.write(nextAngleToDestination(1));
-        if (_angle == _destinationAngle) {
-          if (_destinationAngle >= 90) {
-            _destinationAngle = 0; 
-          } else {
-            _destinationAngle = 180;
-          }
-          _movementPhase++;
-        }
-        finished = false;
-        break;
-
-      case 2:
-        _servo.write(nextAngleToDestination(1));
-        if (_angle == _destinationAngle) {
-          reset();
-          finished = true;
-        } else {
-          finished = false;
-        }
-        break;
+    struct Movement movement;
+    movement.type = Buzz;
+    movement.destinationAngle = buzzAngle;
+    int startingAngle = getFinalDestinationAngle();
+    if (startingAngle > 90) {
+      movement.destinationAngle = 180 - buzzAngle;
     }
-    _lastUpdated = millis();
+    movement.updateDelay = (velocity / 1000.0) * abs(movement.destinationAngle - startingAngle);
+    queue.push(movement);
+
+    resetPosition(Buzz, velocity);
   }
 }
 
-bool JacobsLadder::buzz() {
-  const int BUZZING_ANGLE = 10;
-  
-  bool finished = false;
-  if (millis() - _lastUpdated > _updateDelay) {
-    switch (_movementPhase) {
-      case 0:
-        _updateDelay = 50;
-        if (_angle > 90) {
-          _destinationAngle = 0;
-        } else {
-          _destinationAngle = 180;
-        }
-        _movementPhase++;
-        finished = false;
-        break;
-
-      case 1:
-        _servo.write(nextAngleToDestination(BUZZING_ANGLE));
-        if (_angle == _destinationAngle) {
-          _updateDelay = 50;
-          if (_destinationAngle >= 90) {
-            _destinationAngle = 180 - BUZZING_ANGLE; 
-          } else {
-            _destinationAngle = BUZZING_ANGLE;
-          }
-          _movementPhase++;
-        }
-        finished = false;
-        break;
-
-      case 2:
-        _servo.write(nextAngleToDestination(1));
-        if (_angle == _destinationAngle) {
-          reset();
-          finished = true;
-        } else {
-          finished = false;
-        }
-        break;
-    }
-    _lastUpdated = millis();
+bool JacobsLadder::hasPriority(MovementType type) {
+  if (queue.isEmpty()) {
+    return true;
   }
-  return finished;
+  MovementType frontType = (MovementType) queue.peek().type;
+  if (type < frontType) {
+    return false;
+  } else if (type > frontType) {
+    emptyQueue();
+  }
+  return true;
 }
 
-void JacobsLadder::reset() {
-  _movementPhase = 0;
-  _updateDelay = 50;
+void JacobsLadder::emptyQueue() {
+  while (!queue.isEmpty()) {
+    queue.pop();
+  }
 }
 
-int JacobsLadder::nextAngleToDestination(int increment) {
-  if (_destinationAngle > _angle) {
-    _angle += increment;
-  } else if (_destinationAngle < _angle) {
-    _angle -= increment;
+void JacobsLadder::resetPosition(MovementType type) {
+  resetPosition(type, 10);  
+}
+
+void JacobsLadder::resetPosition(MovementType type, int velocity) {  
+  struct Movement movement;
+  movement.type = type;
+  movement.destinationAngle = 0;
+  int startingAngle = getFinalDestinationAngle();
+  if (startingAngle > 90) {
+    movement.destinationAngle = 180;
+  }
+  movement.updateDelay = (velocity / 1000.0) * abs(movement.destinationAngle - startingAngle);
+  queue.push(movement);
+}
+
+int JacobsLadder::nextAngleToDestination(int destinationAngle) {
+  if (destinationAngle > _angle) {
+    _angle ++;
+  } else if (destinationAngle < _angle) {
+    _angle --;
   }
   return _angle;
 }
+
+int JacobsLadder::getFinalDestinationAngle() {
+  if (queue.isEmpty()) {
+    return _angle;
+  }
+  Movement lastMovement = queue.peekTail();
+  return lastMovement.destinationAngle;
+}
+

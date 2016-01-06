@@ -1,93 +1,73 @@
-#include <QueueArray.h>
+#include <QueueList.h>
 #include <Servo.h>
 #include "JacobsLadder.h"
 
-
-///////////////////////
-//  SETUP VARIABLES  //
-///////////////////////
+///////////////////////////
+///   SETUP VARIABLES   ///
+///////////////////////////
 const int MODULE_ID = 0;
-const int NUM_NODES = 1;
-const int START_PIN = 8;
-const int PINS[NUM_NODES] = {2};
+const int NUM_LADDERS = 5;
+const int PINS[NUM_LADDERS] = {2, 3, 4, 5, 6};
 
 const char CALIBRATE_START = 's';
 const char CALIBRATE_REGISTERED = 'c';
 
-struct Node {
-  int index;
-  JacobsLadder ladder;
-  QueueArray <MovementType> movementQueue;
-};
+///////////////////////////
+///  GLOBAL VARIABLES   ///
+///////////////////////////
 
-Node* nodes[NUM_NODES];
+JacobsLadder* ladders[NUM_LADDERS];
 
-bool moduleCalibrated;
-
-
+bool moduleCalibrated = false;
 
 void setup() {
-  // put your setup code here, to run once:
-  for (int i = 0; i < NUM_NODES; i++) {
-    struct Node node;
-    node.index = i;
-    node.ladder.init(PINS[i]);
-  }
   Serial.begin(9600);
+  Serial.setTimeout(500);
+
+  for (int i = 0; i < NUM_LADDERS; i++) {
+    JacobsLadder* ladder = new JacobsLadder;
+    ladder->init(PINS[i], 500, 2500);
+    ladders[i] = ladder;
+  }
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // TODO: calibrate the module
+//  if (!moduleCalibrated) {
+//    calibrate();
+//    moduleCalibrated = true;
+//  }
 
-  // TODO: Calibrate the system
-  //  if (!moduleCalibrated) {
-  //    calibrate();
-  //    moduleCalibrated = true;
-  //  }
-  
-//  // TODO: Read input from computer over serial
+  // TODO: Read input from computer over serial
 //  if (Serial.available() > 0) {
-//    if (Serial.read() == 's') {
-//      Serial.println("Cascade");
-//      addMovement(nodes[0], Cascade);
-//    }
+//    byte message[3];
+//    Serial.readBytesUntil(0x04, message, 3);
+//    int index = message[0];
+//    MovementType type = (MovementType) message[1];
+//    int velocity = message[2];
+//    
+//    ladders[index]->addMovement(type, velocity);
 //  }
-//
-//  // TODO: Interpret message into changing node data
-//
-//  // TODO: Update nodes (= calling motion functions)
-//  //Serial.println(nodes[0].movementQueue.count());
-//  for (int i = 0; i < NUM_NODES; i++) {
-//    updateNode(nodes[i]);
-//  }
-
-  bool finished = false;
-  while(!finished) {
-     nodes[0]->ladder.performMovement(Cascade);
-     finished = nodes[0]->ladder.finished;
-  }
-}
-
-void updateNode(struct Node* node) {
-  QueueArray <MovementType> queue = node->movementQueue;
-  if (!queue.isEmpty()) {
-    MovementType type = queue.peek();
-    JacobsLadder ladder = node->ladder;
-    ladder.performMovement(type);
-    if (ladder.finished) {
-      queue.pop();
+  
+  if (Serial.available() > 0) {
+    char c = Serial.read();
+    if (c == 'b') {
+      ladders[0]->addMovement(Buzz, 150);
+    } else if (c == 'c') {
+      ladders[0]->addMovement(Cascade, 100);
     }
   }
+
+  // Update the ladders
+  for (int i = 0; i < NUM_LADDERS; i++) {
+    JacobsLadder* ladder = ladders[i];
+    ladder->updateLadder();
+  }
 }
 
-void addMovement(struct Node* node, MovementType type) {
-  QueueArray <MovementType> queue = node->movementQueue;
-  queue.push(type);
+void calibrate() {
+  
 }
-
-/*void saveNode(struct Node node) {
-  nodes[node.index] = node;
-}*/
 
 /*void calibrate() {
   for (int i = 0; i < NUM_NODES; i++) {
