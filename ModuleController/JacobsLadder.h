@@ -25,7 +25,7 @@ enum MovementType
 struct Movement 
 {
   MovementType type;
-  int destinationAngle;
+  byte destinationAngle;
   int updateDelay;
 };
 
@@ -47,8 +47,8 @@ class JacobsLadder {
   private:
     Servo servo;
     QueueList <struct Movement> queue;
-    int _angle;
-    long _lastUpdated = millis();
+    byte _angle;
+    unsigned long _lastUpdated = millis();
 
     void cascade();
     void cascade(int velocity);
@@ -60,8 +60,8 @@ class JacobsLadder {
     void emptyQueue();
     void resetPosition(MovementType type);
     void resetPosition(MovementType type, int velocity);
-    int nextAngleToDestination(int destinationAngle);
-    int getFinalDestinationAngle();
+    byte nextAngleToDestination(byte destinationAngle);
+    byte getFinalDestinationAngle();
 };
 
 #endif

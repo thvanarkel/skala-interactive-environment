@@ -6,8 +6,8 @@
 ///   SETUP VARIABLES   ///
 ///////////////////////////
 const int MODULE_ID = 0;
-const int NUM_LADDERS = 5;
-const int PINS[NUM_LADDERS] = {2, 3, 4, 5, 6};
+const int NUM_LADDERS = 1;
+const int PINS[NUM_LADDERS] = {3};
 
 const char CALIBRATE_START = 's';
 const char CALIBRATE_REGISTERED = 'c';
@@ -20,9 +20,12 @@ JacobsLadder* ladders[NUM_LADDERS];
 
 bool moduleCalibrated = false;
 
+long lastUpdated;
+
 void setup() {
   Serial.begin(9600);
   Serial.setTimeout(500);
+  lastUpdated = millis();
 
   for (int i = 0; i < NUM_LADDERS; i++) {
     JacobsLadder* ladder = new JacobsLadder;
@@ -32,7 +35,7 @@ void setup() {
 }
 
 void loop() {
-  // TODO: calibrate the module
+  // TODO: calibrate the module if not calibrated yet
 //  if (!moduleCalibrated) {
 //    calibrate();
 //    moduleCalibrated = true;
@@ -52,10 +55,19 @@ void loop() {
   if (Serial.available() > 0) {
     char c = Serial.read();
     if (c == 'b') {
-      ladders[0]->addMovement(Buzz, 150);
+      for (int i = 0; i < NUM_LADDERS; i++) {
+        ladders[i]->addMovement(Buzz, 150);
+      }
     } else if (c == 'c') {
-      ladders[0]->addMovement(Cascade, 100);
+      for (int i = 0; i < NUM_LADDERS; i++) {
+        ladders[i]->addMovement(Cascade, 150);
+      }
     }
+  }
+
+  if (millis() - lastUpdated > 6000) {
+    ladders[0]->addMovement(Cascade, 150);
+    lastUpdated = millis();
   }
 
   // Update the ladders
@@ -66,13 +78,9 @@ void loop() {
 }
 
 void calibrate() {
-  
-}
-
-/*void calibrate() {
-  for (int i = 0; i < NUM_NODES; i++) {
-    struct Node node = nodes[i];
-    byte message[2] = {MODULE_ID, node.index};
+  for (int i = 0; i < NUM_LADDERS; i++) {
+    JacobsLadder* ladder = ladders[i];
+    byte message[2] = {MODULE_ID, i};
     Serial.write(message, 2);
     bool startAllowed = false;
     while (!startAllowed) {
@@ -82,19 +90,19 @@ void calibrate() {
         }
       }
     }
-    bool didCalibrateNode = false;
-    while (!didCalibrateNode) {
-      bool finished = false;
-      while (!finished) {
-        finished = node.ladder.tease();
+    bool didCalibrate = false;
+    long lastAdded = millis();
+    while (!didCalibrate) {
+      ladder->updateLadder();
+      if (millis() - lastAdded > 500) {
+        ladder->addMovement(Buzz, 150);
+        lastAdded = millis();
       }
       if (Serial.available() > 0) {
         if (Serial.read() == CALIBRATE_REGISTERED) {
-          didCalibrateNode = true;
+          didCalibrate = true;
         }
       }
     }
-    saveNode(node);
   }
-}*/
-
+}

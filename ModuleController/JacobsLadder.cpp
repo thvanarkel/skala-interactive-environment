@@ -78,9 +78,8 @@ void JacobsLadder::buzz(){
   buzz(400);
 }
 void JacobsLadder::buzz(int velocity) {
-  const int buzzAngle = 50;
+  const int buzzAngle = 30;
   if (hasPriority(Buzz)) {
-    Serial.println("Buzzing");
     resetPosition(Buzz, velocity);
 
     struct Movement movement;
@@ -132,7 +131,7 @@ void JacobsLadder::resetPosition(MovementType type, int velocity) {
   queue.push(movement);
 }
 
-int JacobsLadder::nextAngleToDestination(int destinationAngle) {
+byte JacobsLadder::nextAngleToDestination(byte destinationAngle) {
   if (destinationAngle > _angle) {
     _angle ++;
   } else if (destinationAngle < _angle) {
@@ -141,7 +140,7 @@ int JacobsLadder::nextAngleToDestination(int destinationAngle) {
   return _angle;
 }
 
-int JacobsLadder::getFinalDestinationAngle() {
+byte JacobsLadder::getFinalDestinationAngle() {
   if (queue.isEmpty()) {
     return _angle;
   }
