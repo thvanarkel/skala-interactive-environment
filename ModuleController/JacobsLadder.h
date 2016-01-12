@@ -3,10 +3,9 @@
 
 /*
  * JacobsLadder.cpp - Library for controlling JacobsLadder objects
- * in the SKALA prototype. Apart from including the JacobsLadder.h library
- * it is also required to include the Servo.h library
- * Written by Thomas van Arkel
- * Last updated: Dec 26, 2015
+ * in the SKALA prototype.
+ * Written by Thomas van Arkel and Mo de Ruiter
+ * Last updated: Jan 12, 2016
  * This work is licensed under a Creative Commons Attribution 4.0 International License
  */
 
@@ -31,18 +30,21 @@ struct Movement
 
 class JacobsLadder {
   public:
+    bool isPaused;
+    
     // Initialises the servo by attaching to the pin parameter
     void init(int pin, int minPulse, int maxPulse);
 
+    // Adds a movement with a specified velocity. If a movement wit a higher priority than the
+    // current  running movement is added, lower priority movements are removed. 
+    // If a movement with a lower priority than the running movement is added the movement is ignored.
     void addMovement(MovementType type, int velocity);
 
     // Updates the position of the ladder when movements are in queue. 
     void updateLadder();
     
-    // Pauses all movements currently in the queue. A timeout can be specified, continuing movement
-    // after the timeout elapsed. If no timeout is specified, the system can be unpaused by calling
-    // the function again. Returns whether the system is paused or not (true if paused, false if not).
-    bool pause(int timeout);
+    // Pauses all movements currently in the queue.
+    void pause();
     
   private:
     Servo servo;

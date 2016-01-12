@@ -1,8 +1,8 @@
 /*
  * JacobsLadder.cpp - Library for controlling JacobsLadder objects
  * in the SKALA prototype
- * Written by Thomas van Arkel
- * Last updated: Dec 26, 2015
+ * Written by Thomas van Arkel and Mo de Ruiter
+ * Last updated: Jan 12, 2016
  * This work is licensed under a Creative Commons Attribution 4.0 International License
  */
 
@@ -14,6 +14,7 @@ void JacobsLadder::init(int pin, int minPulse, int maxPulse)
   servo.attach(pin, minPulse, maxPulse);
   servo.write(0);
   _angle = 0;
+  isPaused = false;
 }
 
 void JacobsLadder::addMovement(MovementType type, int velocity) {
@@ -22,10 +23,6 @@ void JacobsLadder::addMovement(MovementType type, int velocity) {
     case Cascade:
       cascade(velocity);
       break;
-
-//    case Tease:
-//      tease();
-//      break;
 
     case Buzz:
       buzz(velocity);
@@ -37,6 +34,10 @@ void JacobsLadder::addMovement(MovementType type, int velocity) {
 }
 
 void JacobsLadder::updateLadder() {
+  if (isPaused) {
+    return;
+  }
+  
   if (queue.isEmpty()) {
     return;
   }
@@ -52,8 +53,12 @@ void JacobsLadder::updateLadder() {
   _lastUpdated = millis();
 }
 
-bool JacobsLadder::pause(int timeout = 0) {
-  return false;
+void JacobsLadder::pause() {
+  if (isPaused) {
+    isPaused = false;
+  } else {
+    isPaused = true;
+  }
 }
 
 
