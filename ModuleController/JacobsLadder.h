@@ -26,6 +26,7 @@ struct Movement
   MovementType type;
   byte destinationAngle;
   int updateDelay;
+  float ratio;
 };
 
 class JacobsLadder {
@@ -52,18 +53,18 @@ class JacobsLadder {
     byte _angle;
     unsigned long _lastUpdated = millis();
 
-    void cascade();
     void cascade(int velocity);
     
-    void buzz();
     void buzz(int velocity);
 
     bool hasPriority(MovementType type);
     void emptyQueue();
     void resetPosition(MovementType type);
     void resetPosition(MovementType type, int velocity);
-    byte nextAngleToDestination(byte destinationAngle);
+    byte nextAngleToDestination(byte destinationAngle, byte increment);
     byte getFinalDestinationAngle();
+    int calculateUpdateDelay(int velocity, byte destinationAngle, byte startingAngle);
+    byte incrementForRatio(float ratio);
 };
 
 #endif

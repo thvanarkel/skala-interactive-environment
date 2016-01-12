@@ -19,7 +19,6 @@ void JacobsLadder::init(int pin, int minPulse, int maxPulse)
 
 void JacobsLadder::addMovement(MovementType type, int velocity) {
   switch (type) {
-
     case Cascade:
       cascade(velocity);
       break;
@@ -41,11 +40,12 @@ void JacobsLadder::updateLadder() {
   if (queue.isEmpty()) {
     return;
   }
+  
   Movement movement = queue.peek();
-  if (millis() - _lastUpdated < movement.updateDelay) {
+  if (millis() - _lastUpdated < incrementForRatio(movement.ratio) * movement.updateDelay) {
     return;
   }
-  _angle = nextAngleToDestination(movement.destinationAngle);
+  _angle = nextAngleToDestination(movement.destinationAngle, incrementForRatio(movement.ratio));
   servo.write(_angle);
   if (_angle == movement.destinationAngle) {
     queue.pop();
@@ -61,40 +61,37 @@ void JacobsLadder::pause() {
   }
 }
 
-
-void JacobsLadder::cascade() {
-  cascade(90);
-}
 void JacobsLadder::cascade(int velocity) {
   if (hasPriority(Cascade)) {
     struct Movement movement;
     movement.type = Cascade;
     movement.destinationAngle = 0;
-    int startingAngle = getFinalDestinationAngle();
+    byte startingAngle = getFinalDestinationAngle();
     if (startingAngle < 90) {
       movement.destinationAngle = 180;
-    }
-    movement.updateDelay = (velocity / 1000.0) * abs(movement.destinationAngle - startingAngle);
+    }   
+    movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
+    movement.ratio = movement.updateDelay / abs(movement.destinationAngle - startingAngle);
+    
     queue.push(movement);
   }
 }
 
-void JacobsLadder::buzz(){
-  buzz(400);
-}
 void JacobsLadder::buzz(int velocity) {
-  const int buzzAngle = 30;
+  const byte buzzAngle = 30;
   if (hasPriority(Buzz)) {
     resetPosition(Buzz, velocity);
 
     struct Movement movement;
     movement.type = Buzz;
     movement.destinationAngle = buzzAngle;
-    int startingAngle = getFinalDestinationAngle();
+    byte startingAngle = getFinalDestinationAngle();
     if (startingAngle > 90) {
       movement.destinationAngle = 180 - buzzAngle;
     }
-    movement.updateDelay = (velocity / 1000.0) * abs(movement.destinationAngle - startingAngle);
+    movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
+    movement.ratio = movement.updateDelay / abs(movement.destinationAngle - startingAngle);
+    
     queue.push(movement);
 
     resetPosition(Buzz, velocity);
@@ -128,19 +125,21 @@ void JacobsLadder::resetPosition(MovementType type, int velocity) {
   struct Movement movement;
   movement.type = type;
   movement.destinationAngle = 0;
-  int startingAngle = getFinalDestinationAngle();
+  byte startingAngle = getFinalDestinationAngle();
   if (startingAngle > 90) {
     movement.destinationAngle = 180;
   }
-  movement.updateDelay = (velocity / 1000.0) * abs(movement.destinationAngle - startingAngle);
+  movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
+  movement.ratio = movement.updateDelay / abs(movement.destinationAngle - startingAngle);
+  
   queue.push(movement);
 }
 
-byte JacobsLadder::nextAngleToDestination(byte destinationAngle) {
+byte JacobsLadder::nextAngleToDestination(byte destinationAngle, byte increment) {
   if (destinationAngle > _angle) {
-    _angle ++;
+    _angle += increment;
   } else if (destinationAngle < _angle) {
-    _angle --;
+    _angle -= increment;
   }
   return _angle;
 }
@@ -151,5 +150,17 @@ byte JacobsLadder::getFinalDestinationAngle() {
   }
   Movement lastMovement = queue.peekTail();
   return lastMovement.destinationAngle;
+}
+
+int JacobsLadder::calculateUpdateDelay(int velocity, byte destinationAngle, byte startingAngle) {
+  return (velocity / 1000.0) * abs(destinationAngle - startingAngle);
+}
+
+byte JacobsLadder::incrementForRatio(float ratio) {
+  byte increment = 1;
+  if (ratio < 50.0) {
+    increment = 5;
+  }
+  return increment;
 }
 
