@@ -7,7 +7,7 @@
 ///////////////////////////
 const int MODULE_ID = 0;
 const int NUM_LADDERS = 1;
-const int PINS[NUM_LADDERS] = {3};
+const int PINS[NUM_LADDERS] = {2};
 
 const char CALIBRATE_START = 's';
 const char CALIBRATE_REGISTERED = 'c';
@@ -56,7 +56,7 @@ void loop() {
     char c = Serial.read();
     if (c == 'b') {
       for (int i = 0; i < NUM_LADDERS; i++) {
-        ladders[i]->addMovement(Buzz, 150);
+        ladders[i]->addMovement(Buzz, 200);
       }
     } else if (c == 'c') {
       for (int i = 0; i < NUM_LADDERS; i++) {
@@ -65,10 +65,10 @@ void loop() {
     }
   }
 
-  if (millis() - lastUpdated > 6000) {
-    ladders[0]->addMovement(Cascade, 150);
-    lastUpdated = millis();
-  }
+//  if (millis() - lastUpdated > 12000) {
+//    ladders[0]->addMovement(Cascade, 150);
+//    lastUpdated = millis();
+//  }
 
   // Update the ladders
   for (int i = 0; i < NUM_LADDERS; i++) {
