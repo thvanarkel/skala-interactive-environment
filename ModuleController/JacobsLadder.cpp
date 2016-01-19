@@ -18,6 +18,12 @@ void JacobsLadder::init(int pin, int minPulse, int maxPulse)
 }
 
 void JacobsLadder::addMovement(MovementType type, int velocity) {
+
+  Serial.println(queue.count());
+  if(queue.count() > 15) {
+    return;
+  }
+  
   switch (type) {
     case Cascade:
       cascade(velocity);
@@ -71,7 +77,7 @@ void JacobsLadder::cascade(int velocity) {
       movement.destinationAngle = 180;
     }   
     movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
-    movement.ratio = movement.updateDelay / abs(movement.destinationAngle - startingAngle);
+    movement.ratio = movement.updateDelay / (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
     
     queue.push(movement);
   }
@@ -90,7 +96,7 @@ void JacobsLadder::buzz(int velocity) {
       movement.destinationAngle = 180 - buzzAngle;
     }
     movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
-    movement.ratio = movement.updateDelay / abs(movement.destinationAngle - startingAngle);
+    movement.ratio = movement.updateDelay / (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
     
     queue.push(movement);
 
@@ -112,9 +118,10 @@ bool JacobsLadder::hasPriority(MovementType type) {
 }
 
 void JacobsLadder::emptyQueue() {
-  while (!queue.isEmpty()) {
-    queue.pop();
-  }
+  if(!queue.isEmpty())
+    while (!queue.isEmpty()) {
+      queue.pop();
+    }
 }
 
 void JacobsLadder::resetPosition(MovementType type) {
@@ -130,7 +137,7 @@ void JacobsLadder::resetPosition(MovementType type, int velocity) {
     movement.destinationAngle = 180;
   }
   movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
-  movement.ratio = movement.updateDelay / abs(movement.destinationAngle - startingAngle);
+  movement.ratio = movement.updateDelay / (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
   
   queue.push(movement);
 }
