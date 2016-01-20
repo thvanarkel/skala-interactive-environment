@@ -10,9 +10,6 @@ const int MODULE_ID = 0;
 const int NUM_LADDERS = 5;
 const int PINS[NUM_LADDERS] = {2,3,7,5,6};
 
-const char CALIBRATE_START = 's';
-const char CALIBRATE_REGISTERED = 'c';
-
 ///////////////////////////
 ///  GLOBAL VARIABLES   ///
 ///////////////////////////
@@ -21,15 +18,22 @@ JacobsLadder* ladders[NUM_LADDERS];
 
 bool moduleCalibrated = false;
 
-long lastUpdated;
+unsigned long lastUpdated;
 
 // For serial communication
 String inputString = ""; //Available input is appended each loop
 boolean stringComplete = false; //Indicates the incoming command is complete and available and should be processed
 
+///////////////////////////
+///  DEBUG/CALIBRATION  ///
+///////////////////////////
+
+const bool debugging = true;
+byte currentLadder = 0;
 
 void setup() {
-  Serial.begin(9600);
+	Serial.println("Setup");
+	Serial.begin(9600);
   Serial.setTimeout(500);
   lastUpdated = millis();
 
@@ -46,24 +50,55 @@ void setup() {
 }
 
 void loop() {
-  // TODO: calibrate the module if not calibrated yet
-//  if (!moduleCalibrated) {
-//    calibrate();
-//    moduleCalibrated = true;
-//  }
+  if (debugging) {
+    if (Serial.available() > 0) {
+      char c = Serial.read();
+      switch(c) {
+        case '0':
+          currentLadder = 0;
+          break;
+        case '1':
+          currentLadder = 1;
+          break;
+        case '2':
+          currentLadder = 2;
+          break;
+        case '3':
+          currentLadder = 3;
+          break;
+        case '4':
+          currentLadder = 4;
+          break;
 
+        case 'b':
+          ladders[currentLadder]->addMovement(Buzz, 150);
+          break;
+        case 'c':
+          ladders[currentLadder]->addMovement(Cascade, 150);
+          break;
+      } 
+    }
+    updateLadders();
+    return;
+  }
 
   // TODO: Read input from computer over serial
-  if (Serial.available() > 0) {
-    byte message[3];
-    Serial.readBytesUntil(';', message, 3);
-    byte index = message[0];
-    MovementType type = (MovementType) message[1];
-    byte velocity = message[2];
-//    Serial.print(message[0]);
-//    Serial.println(';');
-    ladders[index]->addMovement(type, velocity);
-  }
+//  if (Serial.available() > 0) {
+//    byte message[3];
+//    Serial.readBytesUntil(';', message, 3);
+//    byte index = message[0];
+//    MovementType type = (MovementType) message[1];
+//    byte velocity = message[2];
+////    Serial.print(message[0]);
+////    Serial.println(';');
+//    ladders[index]->addMovement(type, velocity);
+//  }
+//  if (Serial.available() > 0) {
+//    char c = Serial.read();
+//    if (c == 'a') {
+//      ladders[0]->addMovement(Cascade, 150);
+//    }
+//  }
 
 //  if (Serial.available() > 0) {
 //    char c = Serial.read();
@@ -76,7 +111,6 @@ void loop() {
 //        ladders[i]->addMovement(Cascade, 150);
 //      }
 //    }
-//  }
 //
 //  if (stringComplete) {
 //    Serial.println("RECEIVED: " + inputString);
@@ -95,11 +129,16 @@ void loop() {
 //  }
 
   // Update the ladders
+  updateLadders();
+}
+
+void updateLadders() {
   for (int i = 0; i < NUM_LADDERS; i++) {
     JacobsLadder* ladder = ladders[i];
     ladder->updateLadder();
   }
 }
+
 //
 //void serialEvent() {
 //  while (Serial.available()) {

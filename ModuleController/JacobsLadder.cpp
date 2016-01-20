@@ -77,7 +77,7 @@ void JacobsLadder::cascade(int velocity) {
       movement.destinationAngle = 180;
     }   
     movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
-    movement.ratio = movement.updateDelay / (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
+    movement.ratio = (float) movement.updateDelay / (int) (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
     
     queue.push(movement);
   }
@@ -96,7 +96,7 @@ void JacobsLadder::buzz(int velocity) {
       movement.destinationAngle = 180 - buzzAngle;
     }
     movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
-    movement.ratio = movement.updateDelay / (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
+    movement.ratio = (float) movement.updateDelay / (int) (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
     
     queue.push(movement);
 
@@ -137,7 +137,7 @@ void JacobsLadder::resetPosition(MovementType type, int velocity) {
     movement.destinationAngle = 180;
   }
   movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
-  movement.ratio = movement.updateDelay / (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
+  movement.ratio = (float) movement.updateDelay / (int) (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
   
   queue.push(movement);
 }
@@ -164,9 +164,10 @@ int JacobsLadder::calculateUpdateDelay(int velocity, byte destinationAngle, byte
 }
 
 byte JacobsLadder::incrementForRatio(float ratio) {
-  byte increment = 1;
-  if (ratio < 50.0) {
-    increment = 5;
+	byte increment = 1;
+	//Serial.println(ratio);
+  if (ratio < .15) {
+    increment = 1;
   }
   return increment;
 }
