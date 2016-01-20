@@ -49,6 +49,14 @@ void setup() {
   Serial.println("R;");
 }
 
+void onStart() {
+    Serial.println("Movement started");
+  }
+
+  void onEnd() {
+    Serial.println("Movement ended");
+  }
+
 void loop() {
   if (debugging) {
     if (Serial.available() > 0) {
@@ -71,16 +79,18 @@ void loop() {
           break;
 
         case 'b':
-          ladders[currentLadder]->addMovement(Buzz, 150);
+          ladders[currentLadder]->addMovement(Buzz, 150, onStart, onEnd);
           break;
         case 'c':
-          ladders[currentLadder]->addMovement(Cascade, 150);
+          ladders[currentLadder]->addMovement(Cascade, 150, onStart, onEnd);
           break;
       } 
     }
     updateLadders();
     return;
   }
+
+  
 
   // TODO: Read input from computer over serial
 //  if (Serial.available() > 0) {
