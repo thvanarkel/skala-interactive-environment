@@ -19,6 +19,7 @@ enum MovementType
   Buzz = 0,
   Tease = 1,
   Cascade = 2,
+  Timeout = 3
 };
 
 typedef void (*LadderCallback)(byte);
@@ -66,6 +67,8 @@ class JacobsLadder {
     void cascade(int velocity, LadderCallback onStart, LadderCallback onEnd);
     
     void buzz(int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd);
+
+    void wait(int duration, LadderCallback onStart, LadderCallback onEnd);
 
     bool hasPriority(MovementType type);
     void emptyQueue();

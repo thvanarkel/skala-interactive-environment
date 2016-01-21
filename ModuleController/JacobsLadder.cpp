@@ -22,25 +22,46 @@ void JacobsLadder::addMovement(MovementType type, int velocity, LadderCallback o
   addMovement(type, velocity, -1, onStart, onEnd);
 }
 
+//void JacobsLadder::addMovement(MovementType type, int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd) {
+//    if(queue.count() > 15) {
+//    return;
+//  }
+//  
+//  switch (type) {
+//    case Cascade:
+//      cascade(velocity, onStart, onEnd);
+//      break;
+//
+//    case Buzz:
+//      buzz(velocity, angle, onStart, onEnd);
+//      break;
+//
+//    case Wait:
+//      wait(velocity, onStart, onEnd);
+//      
+//    default:
+//      break;
+//  }
+//}
+
 void JacobsLadder::addMovement(MovementType type, int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd) {
-    if(queue.count() > 15) {
+  if (!hasPriority(type)) {
     return;
   }
-  
-  switch (type) {
+  switch(type) {
     case Cascade:
-      cascade(velocity, onStart, onEnd);
       break;
 
     case Buzz:
-      buzz(velocity, angle, onStart, onEnd);
+      byte buzzAngle = 30;
+      if (angle >= 
       break;
 
-    default:
+    case Timeout:
       break;
   }
+  
 }
-
 void JacobsLadder::updateLadder() {
   if (isPaused) {
     return;
@@ -97,16 +118,21 @@ void JacobsLadder::cascade(int velocity, LadderCallback onStart, LadderCallback 
 
 void JacobsLadder::buzz(int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd) {
   if (hasPriority(Buzz)) {
+ 
+    byte startingAngle = getFinalDestinationAngle();
+    if (startingAngle != 0 || startingAngle != 180) {
+      resetPosition(Buzz, velocity, NULL);
+    }
+
     byte buzzAngle = 30;
     if (angle >= 0) {
       buzzAngle = angle;
-    } 
-    resetPosition(Buzz, velocity, NULL);
-
+    }
+    
     struct Movement movement;
     movement.type = Buzz;
     movement.destinationAngle = buzzAngle;
-    byte startingAngle = getFinalDestinationAngle();
+    //byte startingAngle = getFinalDestinationAngle();
     if (startingAngle > 90) {
       movement.destinationAngle = 180 - buzzAngle;
     }
@@ -118,6 +144,9 @@ void JacobsLadder::buzz(int velocity, byte angle, LadderCallback onStart, Ladder
     queue.push(movement);
 
     resetPosition(Buzz, velocity, onEnd);
+
+    struct Movement timeout;
+    
   }
 }
 
@@ -200,7 +229,7 @@ byte JacobsLadder::incrementForRatio(float ratio) {
 	byte increment = 1;
 	//Serial.println(ratio);
   if (ratio < .15) {
-    increment = 1;
+    increment = 3;
   }
   return increment;
 }
