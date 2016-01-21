@@ -39,7 +39,7 @@ void setup() {
 
   for (int i = 0; i < NUM_LADDERS; i++) {
     JacobsLadder* ladder = new JacobsLadder;
-    ladder->init(PINS[i], 500, 2500);
+    ladder->init(i, PINS[i], 500, 2500);
     ladders[i] = ladder;
     Serial.print("L");
     Serial.print(i);
@@ -49,13 +49,17 @@ void setup() {
   Serial.println("R;");
 }
 
-void onStart() {
-    Serial.println("Movement started");
-  }
+void onStart(byte index) {
+  Serial.print("S");
+  Serial.print(index);
+  Serial.println(";");
+}
 
-  void onEnd() {
-    Serial.println("Movement ended");
-  }
+void onEnd(byte index) {
+  Serial.print("E");
+  Serial.print(index);
+  Serial.println(";");
+}
 
 void loop() {
   if (debugging) {
@@ -79,10 +83,10 @@ void loop() {
           break;
 
         case 'b':
-          ladders[currentLadder]->addMovement(Buzz, 150, onStart, onEnd);
+          ladders[currentLadder]->addMovement(Buzz, 150, 35, onStart, onEnd);
           break;
         case 'c':
-          ladders[currentLadder]->addMovement(Cascade, 150, onStart, onEnd);
+          ladders[currentLadder]->addMovement(Cascade, 150, -1, onStart, onEnd);
           break;
       } 
     }
@@ -90,53 +94,14 @@ void loop() {
     return;
   }
 
-  
-
-  // TODO: Read input from computer over serial
-//  if (Serial.available() > 0) {
-//    byte message[3];
-//    Serial.readBytesUntil(';', message, 3);
-//    byte index = message[0];
-//    MovementType type = (MovementType) message[1];
-//    byte velocity = message[2];
-////    Serial.print(message[0]);
-////    Serial.println(';');
-//    ladders[index]->addMovement(type, velocity);
-//  }
-//  if (Serial.available() > 0) {
-//    char c = Serial.read();
-//    if (c == 'a') {
-//      ladders[0]->addMovement(Cascade, 150);
-//    }
-//  }
-
-//  if (Serial.available() > 0) {
-//    char c = Serial.read();
-//    if (c == 'b') {
-//      for (int i = 0; i < NUM_LADDERS; i++) {
-//        ladders[i]->addMovement(Buzz, 150);
-//      }
-//    } else if (c == 'c') {
-//      for (int i = 0; i < NUM_LADDERS; i++) {
-//        ladders[i]->addMovement(Cascade, 150);
-//      }
-//    }
-//
-//  if (stringComplete) {
-//    Serial.println("RECEIVED: " + inputString);
-//    // clear the string:
-//    inputString = "";
-//    stringComplete = false;
-//  }
-
-
-
-//  if (millis() - lastUpdated > 2000) {
-//    for (int i = 0; i < NUM_LADDERS; i++) {
-//      ladders[i]->addMovement(Cascade, 150);
-//    }
-//    lastUpdated = millis();
-//  }
+  if (Serial.available() > 0) {
+    byte message[3];
+    Serial.readBytesUntil(';', message, 3);
+    byte index = message[0];
+    MovementType type = (MovementType) message[1];
+    byte velocity = message[2];
+    ladders[index]->addMovement(type, velocity, onStart, onEnd);
+  }
 
   // Update the ladders
   updateLadders();
@@ -148,49 +113,3 @@ void updateLadders() {
     ladder->updateLadder();
   }
 }
-
-//
-//void serialEvent() {
-//  while (Serial.available()) {
-//    // get the new byte:
-//    char inChar = (char)Serial.read();
-//    // add it to the inputString:
-//    inputString += inChar;
-//    // if the incoming character is a newline, set a flag
-//    // so the main loop can do something about it:
-//    if (inChar == ';') {
-//      stringComplete = true;
-//    }
-//  }
-//}
-//
-//
-//void calibrate() {
-//  for (int i = 0; i < NUM_LADDERS; i++) {
-//    JacobsLadder* ladder = ladders[i];
-//    byte message[2] = {MODULE_ID, i};
-//    Serial.write(message, 2);
-//    bool startAllowed = false;
-//    while (!startAllowed) {
-//      if (Serial.available() > 0) {
-//        if (Serial.read() == CALIBRATE_START) {
-//          startAllowed = true;
-//        }
-//      }
-//    }
-//    bool didCalibrate = false;
-//    long lastAdded = millis();
-//    while (!didCalibrate) {
-//      ladder->updateLadder();
-//      if (millis() - lastAdded > 500) {
-//        ladder->addMovement(Buzz, 150);
-//        lastAdded = millis();
-//      }
-//      if (Serial.available() > 0) {
-//        if (Serial.read() == CALIBRATE_REGISTERED) {
-//          didCalibrate = true;
-//        }
-//      }
-//    }
-//  }
-//}

@@ -21,7 +21,7 @@ enum MovementType
   Cascade = 2,
 };
 
-typedef void (*LadderCallback)(void);
+typedef void (*LadderCallback)(byte);
 
 struct Movement 
 {
@@ -35,17 +35,20 @@ struct Movement
 
 class JacobsLadder {
   public:
+    byte index;
     bool isPaused;
     
     // Initialises the servo by attaching to the pin parameter
-    void init(int pin, int minPulse, int maxPulse);
+    void init(byte ladderIndex, int pin, int minPulse, int maxPulse);
 
     // Adds a movement with a specified velocity. If a movement wit a higher priority than the
     // current  running movement is added, lower priority movements are removed. 
     // If a movement with a lower priority than the running movement is added the movement is ignored.
-    void addMovement(MovementType type, int velocity);
-
+    // Returns a callback for the start and the end.
     void addMovement(MovementType type, int velocity, LadderCallback onStart, LadderCallback onEnd);
+    // Allows specification of the angle of the buzz movement, a value of less than zero will result
+    // in the default value of 30 degrees.
+    void addMovement(MovementType type, int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd);
 
     // Updates the position of the ladder when movements are in queue. 
     void updateLadder();
@@ -60,11 +63,9 @@ class JacobsLadder {
     unsigned long _lastUpdated = millis();
     bool started = false;
 
-    void cascade(int velocity);
     void cascade(int velocity, LadderCallback onStart, LadderCallback onEnd);
     
-    void buzz(int velocity);
-    void buzz(int velocity, LadderCallback onStart, LadderCallback onEnd);
+    void buzz(int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd);
 
     bool hasPriority(MovementType type);
     void emptyQueue();

@@ -9,20 +9,21 @@
 #include "Arduino.h"
 #include "JacobsLadder.h"
 
-void JacobsLadder::init(int pin, int minPulse, int maxPulse)
+void JacobsLadder::init(byte ladderIndex, int pin, int minPulse, int maxPulse)
 {
+  index = ladderIndex;
   servo.attach(pin, minPulse, maxPulse);
   servo.write(0);
   _angle = 0;
   isPaused = false;
 }
 
-void JacobsLadder::addMovement(MovementType type, int velocity) {
-  addMovement(type, velocity, NULL, NULL);
+void JacobsLadder::addMovement(MovementType type, int velocity, LadderCallback onStart, LadderCallback onEnd) {
+  addMovement(type, velocity, -1, onStart, onEnd);
 }
 
-void JacobsLadder::addMovement(MovementType type, int velocity, LadderCallback onStart, LadderCallback onEnd) {
-  if(queue.count() > 15) {
+void JacobsLadder::addMovement(MovementType type, int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd) {
+    if(queue.count() > 15) {
     return;
   }
   
@@ -32,7 +33,7 @@ void JacobsLadder::addMovement(MovementType type, int velocity, LadderCallback o
       break;
 
     case Buzz:
-      buzz(velocity, onStart, onEnd);
+      buzz(velocity, angle, onStart, onEnd);
       break;
 
     default:
@@ -54,13 +55,13 @@ void JacobsLadder::updateLadder() {
     return;
   }
   if (!started) {
-    if (movement.onStart != NULL) movement.onStart();
+    if (movement.onStart != NULL) movement.onStart(index);
     started = true;
   }
   _angle = nextAngleToDestination(movement.destinationAngle, incrementForRatio(movement.ratio));
   servo.write(_angle);
   if (_angle == movement.destinationAngle) {
-    if (movement.onEnd != NULL) movement.onEnd();
+    if (movement.onEnd != NULL) movement.onEnd(index);
     started = false;
     queue.pop();
   }
@@ -94,9 +95,12 @@ void JacobsLadder::cascade(int velocity, LadderCallback onStart, LadderCallback 
   }
 }
 
-void JacobsLadder::buzz(int velocity, LadderCallback onStart, LadderCallback onEnd) {
-  const byte buzzAngle = 30;
+void JacobsLadder::buzz(int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd) {
   if (hasPriority(Buzz)) {
+    byte buzzAngle = 30;
+    if (angle >= 0) {
+      buzzAngle = angle;
+    } 
     resetPosition(Buzz, velocity, NULL);
 
     struct Movement movement;
