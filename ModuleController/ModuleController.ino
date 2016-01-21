@@ -28,7 +28,7 @@ boolean stringComplete = false; //Indicates the incoming command is complete and
 ///  DEBUG/CALIBRATION  ///
 ///////////////////////////
 
-const bool debugging = false;
+const bool debugging = true;
 byte currentLadder = 0;
 
 void setup() {
@@ -48,6 +48,14 @@ void setup() {
   
   Serial.println("R;");
 }
+
+void onStart() {
+    Serial.println("Movement started");
+  }
+
+  void onEnd() {
+    Serial.println("Movement ended");
+  }
 
 void loop() {
   if (debugging) {
@@ -71,29 +79,30 @@ void loop() {
           break;
 
         case 'b':
-          ladders[currentLadder]->addMovement(Buzz, 150);
+          ladders[currentLadder]->addMovement(Buzz, 150, onStart, onEnd);
           break;
         case 'c':
-          ladders[currentLadder]->addMovement(Cascade, 150);
+          ladders[currentLadder]->addMovement(Cascade, 150, onStart, onEnd);
           break;
       } 
     }
     updateLadders();
     return;
-  } 
+  }
+
+  
 
   // TODO: Read input from computer over serial
-  if (Serial.available() > 0) {
-    byte message[3];
-    Serial.readBytesUntil(';', message, 3);
-    byte index = message[0];
-    MovementType type = (MovementType) message[1];
-    byte velocity = message[2];
-//    Serial.print(message[0]);
-//    Serial.println(';');
-    ladders[index]->addMovement(type, velocity);
-  }
-  
+//  if (Serial.available() > 0) {
+//    byte message[3];
+//    Serial.readBytesUntil(';', message, 3);
+//    byte index = message[0];
+//    MovementType type = (MovementType) message[1];
+//    byte velocity = message[2];
+////    Serial.print(message[0]);
+////    Serial.println(';');
+//    ladders[index]->addMovement(type, velocity);
+//  }
 //  if (Serial.available() > 0) {
 //    char c = Serial.read();
 //    if (c == 'a') {

@@ -21,12 +21,16 @@ enum MovementType
   Cascade = 2,
 };
 
+typedef void (*LadderCallback)(void);
+
 struct Movement 
 {
   MovementType type;
   byte destinationAngle;
   int updateDelay;
   float ratio;
+  LadderCallback onStart = NULL;
+  LadderCallback onEnd = NULL;
 };
 
 class JacobsLadder {
@@ -41,6 +45,8 @@ class JacobsLadder {
     // If a movement with a lower priority than the running movement is added the movement is ignored.
     void addMovement(MovementType type, int velocity);
 
+    void addMovement(MovementType type, int velocity, LadderCallback onStart, LadderCallback onEnd);
+
     // Updates the position of the ladder when movements are in queue. 
     void updateLadder();
     
@@ -52,15 +58,18 @@ class JacobsLadder {
     QueueList <struct Movement> queue;
     byte _angle;
     unsigned long _lastUpdated = millis();
+    bool started = false;
 
     void cascade(int velocity);
+    void cascade(int velocity, LadderCallback onStart, LadderCallback onEnd);
     
     void buzz(int velocity);
+    void buzz(int velocity, LadderCallback onStart, LadderCallback onEnd);
 
     bool hasPriority(MovementType type);
     void emptyQueue();
-    void resetPosition(MovementType type);
     void resetPosition(MovementType type, int velocity);
+    void resetPosition(MovementType type, int velocity, LadderCallback onEnd);
     byte nextAngleToDestination(byte destinationAngle, byte increment);
     byte getFinalDestinationAngle();
     int calculateUpdateDelay(int velocity, byte destinationAngle, byte startingAngle);

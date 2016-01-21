@@ -18,19 +18,21 @@ void JacobsLadder::init(int pin, int minPulse, int maxPulse)
 }
 
 void JacobsLadder::addMovement(MovementType type, int velocity) {
+  addMovement(type, velocity, NULL, NULL);
+}
 
-  Serial.println(queue.count());
-  if(queue.count() > 1) {
+void JacobsLadder::addMovement(MovementType type, int velocity, LadderCallback onStart, LadderCallback onEnd) {
+  if(queue.count() > 15) {
     return;
   }
   
   switch (type) {
     case Cascade:
-      cascade(velocity);
+      cascade(velocity, onStart, onEnd);
       break;
 
     case Buzz:
-      buzz(velocity);
+      buzz(velocity, onStart, onEnd);
       break;
 
     default:
@@ -51,9 +53,15 @@ void JacobsLadder::updateLadder() {
   if (millis() - _lastUpdated < incrementForRatio(movement.ratio) * movement.updateDelay) {
     return;
   }
+  if (!started) {
+    if (movement.onStart != NULL) movement.onStart();
+    started = true;
+  }
   _angle = nextAngleToDestination(movement.destinationAngle, incrementForRatio(movement.ratio));
   servo.write(_angle);
   if (_angle == movement.destinationAngle) {
+    if (movement.onEnd != NULL) movement.onEnd();
+    started = false;
     queue.pop();
   }
   _lastUpdated = millis();
@@ -67,7 +75,7 @@ void JacobsLadder::pause() {
   }
 }
 
-void JacobsLadder::cascade(int velocity) {
+void JacobsLadder::cascade(int velocity, LadderCallback onStart, LadderCallback onEnd) {
   if (hasPriority(Cascade)) {
     struct Movement movement;
     movement.type = Cascade;
@@ -78,15 +86,18 @@ void JacobsLadder::cascade(int velocity) {
     }   
     movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
     movement.ratio = (float) movement.updateDelay / (int) (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
+
+    movement.onStart = onStart;
+    movement.onEnd = onEnd;
     
     queue.push(movement);
   }
 }
 
-void JacobsLadder::buzz(int velocity) {
+void JacobsLadder::buzz(int velocity, LadderCallback onStart, LadderCallback onEnd) {
   const byte buzzAngle = 30;
   if (hasPriority(Buzz)) {
-    resetPosition(Buzz, velocity);
+    resetPosition(Buzz, velocity, NULL);
 
     struct Movement movement;
     movement.type = Buzz;
@@ -98,9 +109,11 @@ void JacobsLadder::buzz(int velocity) {
     movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
     movement.ratio = (float) movement.updateDelay / (int) (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
     
+    movement.onStart = onStart;
+    
     queue.push(movement);
 
-    resetPosition(Buzz, velocity);
+    resetPosition(Buzz, velocity, onEnd);
   }
 }
 
@@ -124,10 +137,6 @@ void JacobsLadder::emptyQueue() {
     }
 }
 
-void JacobsLadder::resetPosition(MovementType type) {
-  resetPosition(type, 10);  
-}
-
 void JacobsLadder::resetPosition(MovementType type, int velocity) {  
   struct Movement movement;
   movement.type = type;
@@ -138,6 +147,26 @@ void JacobsLadder::resetPosition(MovementType type, int velocity) {
   }
   movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
   movement.ratio = (float) movement.updateDelay / (int) (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
+
+  movement.onStart = NULL;
+  movement.onEnd = NULL;
+  
+  queue.push(movement);
+}
+
+void JacobsLadder::resetPosition(MovementType type, int velocity, LadderCallback onEnd) {  
+  struct Movement movement;
+  movement.type = type;
+  movement.destinationAngle = 0;
+  byte startingAngle = getFinalDestinationAngle();
+  if (startingAngle > 90) {
+    movement.destinationAngle = 180;
+  }
+  movement.updateDelay = calculateUpdateDelay(velocity, movement.destinationAngle, startingAngle);
+  movement.ratio = (float) movement.updateDelay / (int) (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
+
+  movement.onStart = NULL;
+  movement.onEnd = onEnd;
   
   queue.push(movement);
 }
