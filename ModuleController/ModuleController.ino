@@ -83,10 +83,10 @@ void loop() {
           break;
 
         case 'b':
-          ladders[currentLadder]->addMovement(Buzz, 150, 35, onStart, onEnd);
+          ladders[currentLadder]->addMovement(Buzz, 150, 0, onStart, onEnd);
           break;
         case 'c':
-          ladders[currentLadder]->addMovement(Cascade, 150, -1, onStart, onEnd);
+          ladders[currentLadder]->addMovement(Cascade, 150, 0, onStart, onEnd);
           break;
       } 
     }

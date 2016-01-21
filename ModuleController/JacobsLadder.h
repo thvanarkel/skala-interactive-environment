@@ -19,7 +19,8 @@ enum MovementType
   Buzz = 0,
   Tease = 1,
   Cascade = 2,
-  Timeout = 3
+  Reset = 3,
+  Timeout = 4,
 };
 
 typedef void (*LadderCallback)(byte);

@@ -45,23 +45,82 @@ void JacobsLadder::addMovement(MovementType type, int velocity, LadderCallback o
 //}
 
 void JacobsLadder::addMovement(MovementType type, int velocity, byte angle, LadderCallback onStart, LadderCallback onEnd) {
+  if(queue.count() > 15) {
+    return;
+  }
+  
   if (!hasPriority(type)) {
     return;
   }
+  byte startingAngle = getFinalDestinationAngle();
+  byte destinationAngle = 0;
+  byte buzzAngle = 0;
+  int updateDelay = 0;
+  bool needsResetting = false;
+  bool shouldSendOnStart = true;
+  bool shouldSendOnEnd = true;
+  
   switch(type) {
     case Cascade:
+      destinationAngle = 0;
+      if (startingAngle < 90) {
+        destinationAngle = 180;
+      }
+      updateDelay = calculateUpdateDelay(velocity, destinationAngle, startingAngle);
       break;
 
     case Buzz:
-      byte buzzAngle = 30;
-      if (angle >= 
+      addMovement(Reset, velocity, 0, NULL, NULL);
+      buzzAngle = 30;
+      if (angle != 0) {
+         buzzAngle = angle;
+      }
+      destinationAngle = buzzAngle;
+      if (startingAngle > 90) {
+        destinationAngle = 180 - buzzAngle;
+      }
+      Serial.println(destinationAngle);
+      updateDelay = calculateUpdateDelay(velocity, destinationAngle, startingAngle);
+      needsResetting = true;
+      shouldSendOnEnd = false;
+      break;
+
+    case Reset:
+      if (startingAngle != 0 || startingAngle != 180) {
+        destinationAngle = 0;
+        if (startingAngle > 90) {
+          destinationAngle = 180;
+        }
+      }
       break;
 
     case Timeout:
+      destinationAngle = startingAngle;
+      updateDelay = velocity;
       break;
   }
-  
+
+  struct Movement movement;
+  movement.type = type;
+  movement.destinationAngle = destinationAngle;
+  movement.updateDelay = updateDelay;
+  movement.ratio = (float) movement.updateDelay / (int) (abs(movement.destinationAngle - startingAngle) != 0 ? abs(movement.destinationAngle - startingAngle) : 1);
+  if (shouldSendOnStart) {
+    movement.onStart = onStart;
+  } else {
+    movement.onStart = NULL;
+  }
+  if (shouldSendOnEnd) {
+    movement.onEnd = onEnd;
+  } else {
+    movement.onEnd = NULL;
+  }
+  queue.push(movement);
+  if (needsResetting) {
+    addMovement(Reset, velocity, -1, NULL, onEnd);
+  }
 }
+
 void JacobsLadder::updateLadder() {
   if (isPaused) {
     return;
@@ -72,7 +131,7 @@ void JacobsLadder::updateLadder() {
   }
   
   Movement movement = queue.peek();
-  if (millis() - _lastUpdated < incrementForRatio(movement.ratio) * movement.updateDelay) {
+  if (movement.type != Timeout && millis() - _lastUpdated < incrementForRatio(movement.ratio) * movement.updateDelay) {
     return;
   }
   if (!started) {
@@ -80,6 +139,7 @@ void JacobsLadder::updateLadder() {
     started = true;
   }
   _angle = nextAngleToDestination(movement.destinationAngle, incrementForRatio(movement.ratio));
+  Serial.println(_angle);
   servo.write(_angle);
   if (_angle == movement.destinationAngle) {
     if (movement.onEnd != NULL) movement.onEnd(index);
@@ -222,14 +282,19 @@ byte JacobsLadder::getFinalDestinationAngle() {
 }
 
 int JacobsLadder::calculateUpdateDelay(int velocity, byte destinationAngle, byte startingAngle) {
-  return (velocity / 1000.0) * abs(destinationAngle - startingAngle);
+  
+  int updateDelay = (velocity / 1000.0) * abs(destinationAngle - startingAngle);
+  if (updateDelay <= 5) {
+    return 5;
+  }
+  return updateDelay;
 }
 
 byte JacobsLadder::incrementForRatio(float ratio) {
 	byte increment = 1;
 	//Serial.println(ratio);
   if (ratio < .15) {
-    increment = 3;
+    increment = 1;
   }
   return increment;
 }
