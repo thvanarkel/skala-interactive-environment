@@ -21,6 +21,8 @@ public class Arduino implements jssc.SerialPortEventListener {
 
 	static private Pattern msgPattern = Pattern.compile("^\n*.*;\n$");
 	static private Pattern newLadderPattern = Pattern.compile("L(?<id>[0-9]+)");
+	static private Pattern ladderStartPattern = Pattern.compile("S(?<id>[0-9]+)");
+	static private Pattern ladderEndPattern = Pattern.compile("E(?<id>[0-9]+)");
 	static private Pattern readyPattern = Pattern.compile("^R$");
 	
 	private HashMap<Pattern, String> msgPatterns;
@@ -34,6 +36,8 @@ public class Arduino implements jssc.SerialPortEventListener {
 		this.msgPatterns = new HashMap<Pattern, String>();
 
 		this.msgPatterns.put(newLadderPattern, "addLadder");
+		this.msgPatterns.put(ladderStartPattern, "ladderStart");
+		this.msgPatterns.put(ladderEndPattern, "ladderEnd");
 		this.msgPatterns.put(readyPattern, "ready");
 	}
 	
@@ -68,9 +72,9 @@ public class Arduino implements jssc.SerialPortEventListener {
 			e.printStackTrace();
 		}
 	}
-	
-	public void sendBuzz(byte address, byte velocity) {
-		byte[] message = {address, 0, velocity};
+
+	public void sendBuzz(byte address, byte velocity, byte angle) {
+		byte[] message = {address, 0, velocity, angle};
 //		System.out.println("SENDBUZZ " + message[0] + message[1] + message[2]);
 		try {
 			this.serialPort.writeBytes(message);
@@ -80,10 +84,15 @@ public class Arduino implements jssc.SerialPortEventListener {
 		}
 	}
 	
+	public void sendBuzz(byte address, byte velocity) {
+		sendBuzz(address, velocity, (byte) 30);
+	}
+	
 	public void sendCascade(byte address, byte velocity) {
 		byte[] message = {address, 2, velocity};
 		try {
 			this.serialPort.writeBytes(message);
+			this.serialPort.writeString(";");
 		} catch (SerialPortException e) {
 			e.printStackTrace();
 		}
@@ -139,6 +148,14 @@ public class Arduino implements jssc.SerialPortEventListener {
 		System.out.println("ARDUINO::ACTION " + action);
 		if(action == "addLadder") {
 			this.addLadder(Byte.parseByte(matcher.group("id")));
+		} else if(action == "ladderStart") {
+			Byte id = Byte.parseByte(matcher.group("id"));
+			getLadder(id).busy = true; 
+		} else if(action == "ladderEnd") {
+			Byte id = Byte.parseByte(matcher.group("id"));
+			Ladder l = this.getLadder(id);
+			l.busy = false;
+			l.setState(Ladder.State.Idle); 
 		} else if (action == "ready") {
 			this.ready();
 		}

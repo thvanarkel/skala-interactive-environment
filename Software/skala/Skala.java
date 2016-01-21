@@ -183,7 +183,7 @@ public class Skala extends DWApp implements KinectListener, SerialPortEventListe
 		
 //		double xAngle = Math.PI * 0.0 / 180.0;
 		
-		kinect1=new Sensor(0, new Point3D(2.5,2.5,0), new Point3D((17.0/180.0)*Math.PI, 0.0, 0.0));
+		kinect1=new Sensor(0, new Point3D(2.5,2.5,0), new Point3D((23.0/180.0)*Math.PI, 0.0, 0.0));
 //		kinect2=new Sensor(1, new Point3D(2.5,1.15,3.5), new Point3D((1.0/180.0)*Math.PI, Math.PI, 0.0));
 		
 		kinectMenu = new JMenu("Kinects");
@@ -318,7 +318,7 @@ public class Skala extends DWApp implements KinectListener, SerialPortEventListe
 		}
 		if(source==printButton){
 			for(Ladder l : this.getLadders()) {
-				System.out.println("if(l.getId() == " + l.getId() + "){l.setPosition(new Point3D(" + l.position.getX() + ", " + l.position.getY() + ", " + l.position.getZ()+ "));}");				
+				System.out.println("if(i == " + l.getId() + "){l.setPosition(new Point3D(" + l.position.getX() + ", " + l.position.getY() + ", " + l.position.getZ()+ "));}");				
 			}
 		}
 		if(source==loadButton) {
@@ -371,7 +371,9 @@ public class Skala extends DWApp implements KinectListener, SerialPortEventListe
 			
 			if(u.isPointing()){
 				for(RealWorldObject target : getRealWorldObjects()) {
-					if(u.isPointingAt(target)){
+					if(u.isTouching(target)){
+						u.fireTouchingEvent(target);
+					} else if(u.isPointingAt(target)){
 						u.firePointingEvent(target);
 					}
 				}
@@ -608,16 +610,17 @@ public class Skala extends DWApp implements KinectListener, SerialPortEventListe
 		
 		for(int i = 0; i < 10; i++) {
 			Ladder l = getLadders().get(i);
-			if(i == 0){l.setPosition(new Point3D(1.2129212780514784, 1.600914526202819, 2.8773870625868163));}
-			if(i == 1){l.setPosition(new Point3D(2.373865181295706, 1.3363563243696048, 2.896606140344282));}
-			if(i == 2){l.setPosition(new Point3D(2.335012671097102, 1.6656790680903166, 2.7767823920381245));}
-			if(i == 3){l.setPosition(new Point3D(1.1835819227808178, 1.1058444860396788, 2.4055932959638398));}
-			if(i == 4){l.setPosition(new Point3D(2.7856796005512834, 1.7537442264114604, 2.0313522113170484));}
-			if(i == 5){l.setPosition(new Point3D(2.1112099381702656, 1.4757060033990648, 1.9472508977883698));}
-			if(i == 6){l.setPosition(new Point3D(2.73580139921242, 1.0290523076651918, 2.038399806614459));}
-			if(i == 7){l.setPosition(new Point3D(1.7116220295555737, 1.4784130622119904, 2.616600616990012));}
-			if(i == 8){l.setPosition(new Point3D(3.0377237646154662, 1.1255877667086813, 1.8616305264527484));}
-			if(i == 9){l.setPosition(new Point3D(1.616895737484823, 1.700613341380821, 1.8680294933752633));}
+
+			if(i == 0){l.setPosition(new Point3D(2.049910396818994, 1.2293827215231015, 1.2917522893323723));}
+			if(i == 1){l.setPosition(new Point3D(2.1701514506123005, 1.1642985292589647, 2.5948458967350723));}
+			if(i == 2){l.setPosition(new Point3D(2.2282584839999533, 1.6586700681957036, 2.0709759775390832));}
+			if(i == 3){l.setPosition(new Point3D(2.446391838004901, 0.8229985482874329, 1.3121741899554646));}
+			if(i == 4){l.setPosition(new Point3D(2.608870482685298, 1.3259179956327214, 2.8062947767704465));}
+			if(i == 5){l.setPosition(new Point3D(2.818175192438754, 1.2812597855344445, 1.4944066168850016));}
+			if(i == 6){l.setPosition(new Point3D(2.8097867983312907, 1.0484162710677762, 2.059800997701468));}
+			if(i == 7){l.setPosition(new Point3D(2.2665609007185745, 1.2608695217476547, 1.5106925178644453));}
+			if(i == 8){l.setPosition(new Point3D(3.234291389708584, 1.0933451851242233, 2.5479997496157725));}
+			if(i == 9){l.setPosition(new Point3D(3.286952369419076, 0.890828439040805, 1.8838006654842017));}
 		}
 		
 		isCalibrated= true;

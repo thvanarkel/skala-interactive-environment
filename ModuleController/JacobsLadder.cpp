@@ -144,7 +144,7 @@ void JacobsLadder::updateLadder() {
   }
   _angle = nextAngleToDestination(movement.destinationAngle, incrementForRatio(movement.ratio));
   servo.write(_angle);
-  Serial.println(_angle);
+//  Serial.println(_angle);
   if (abs(movement.destinationAngle - _angle) <= incrementForRatio(movement.ratio)) {
     _angle = movement.destinationAngle;
     servo.write(_angle);

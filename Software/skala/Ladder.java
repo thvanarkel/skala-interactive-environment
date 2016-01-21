@@ -5,6 +5,8 @@ import java.util.Vector;
 public class Ladder extends SkalaObject implements Stated<Ladder.State> {	
 
 	static String type = "ladder";
+
+	public boolean busy;
 	
 	private Vector<StatedListener> listeners;
 	
@@ -38,9 +40,14 @@ public class Ladder extends SkalaObject implements Stated<Ladder.State> {
 //		setState(State.Swinging);
 	};
 
+
 	public void cascade(){
+		cascade((byte) 90);
+	};
+	
+	public void cascade(byte speed){
 		setState(State.Cascading);
-		this.arduino.sendCascade(this.getId(), (byte)90);
+		this.arduino.sendCascade(this.getId(), speed);
 	};
 	
 	public void stop(){

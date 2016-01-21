@@ -28,11 +28,11 @@ boolean stringComplete = false; //Indicates the incoming command is complete and
 ///  DEBUG/CALIBRATION  ///
 ///////////////////////////
 
-const bool debugging = true;
+const bool debugging = false;
 byte currentLadder = 0;
 
 void setup() {
-	Serial.println("Setup");
+//	Serial.println("Setup");
 	Serial.begin(9600);
   Serial.setTimeout(500);
   lastUpdated = millis();
@@ -83,7 +83,7 @@ void loop() {
           break;
 
         case 'b':
-          ladders[currentLadder]->addMovement(Buzz, 1000, 0, onStart, onEnd);
+          ladders[currentLadder]->addMovement(Buzz, 150, 0, onStart, onEnd);
           break;
         case 'c':
           ladders[currentLadder]->addMovement(Cascade, 150, 0, onStart, onEnd);

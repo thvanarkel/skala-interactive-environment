@@ -31,10 +31,10 @@ public class CalibrationBehaviour extends Behaviour {
 			this.running = false;
 		}
 		
-		calibrationQueue = new Vector<Ladder>(ladders);
+		setCalibrationQueue(new Vector<Ladder>(ladders));
 		ladders = new Vector<Ladder>();
 		
-		calibratingLadder = calibrationQueue.firstElement();
+		calibratingLadder = getCalibrationQueue().firstElement();
 		
 		installation.isCalibrated = false;
 		installation.isCalibrating = true;
@@ -126,14 +126,28 @@ public class CalibrationBehaviour extends Behaviour {
 
 	public void capture() {
 		installation.getLadders().add(calibratingLadder);
-		calibrationQueue.remove(calibratingLadder);
-		if(!calibrationQueue.isEmpty()){
-			calibratingLadder = calibrationQueue.firstElement();
+		getCalibrationQueue().remove(calibratingLadder);
+		if(!getCalibrationQueue().isEmpty()){
+			calibratingLadder = getCalibrationQueue().firstElement();
 			calibratingLadder.buzz();
 		} else {
 			installation.setIsCalibrated(true);
 			installation.setBehaviour(new DefaultBehaviour(installation, installation.getLadders()));
 		}
+		
+	}
+
+	public Vector<Ladder> getCalibrationQueue() {
+		return calibrationQueue;
+	}
+
+	public void setCalibrationQueue(Vector<Ladder> calibrationQueue) {
+		this.calibrationQueue = calibrationQueue;
+	}
+
+	@Override
+	public void onUserTouch(User user, RealWorldObject target) {
+		// TODO Auto-generated method stub
 		
 	}
 

@@ -33,9 +33,10 @@ public class User extends SkalaObject implements Stated<User.State>{
 
 	boolean valid = true;
 	
-	public final static double SUDDEN_MOVEMENT_THRESHOLD = 8;
-	public final double MOVEMENT_THRESHOLD = 0.1;
-	public static final double POINTING_THRESHOLD = 0.25; 
+	public static final double SUDDEN_MOVEMENT_THRESHOLD = 8;
+	public static final double MOVEMENT_THRESHOLD = 0.1;
+	public static final double POINTING_THRESHOLD = 0.3; 
+	public static final double USER_TOUCHING_DISTANCE = 0.1; 
 	
 	public User(int id) {
 		super();
@@ -152,31 +153,63 @@ public class User extends SkalaObject implements Stated<User.State>{
 		Point3D rElbow = joints.get(Skeleton.ELBOW_RIGHT);
 		Point3D rShoulder= joints.get(Skeleton.SHOULDER_RIGHT);
 		
+		Point3D lHand = joints.get(Skeleton.HAND_LEFT);
+		Point3D lElbow = joints.get(Skeleton.ELBOW_LEFT);
+		Point3D lShoulder= joints.get(Skeleton.SHOULDER_LEFT);
+
+				
+		double dR = rHand.subtract(rElbow).normalize().distance(rElbow.subtract(rShoulder).normalize());
+		double dL = lHand.subtract(lElbow).normalize().distance(lElbow.subtract(lShoulder).normalize());
+
+		double dry = Math.abs(rHand.getY() - rShoulder.getY());
+		double dly = Math.abs(lHand.getY() - lShoulder.getY());
 		
-		double d = rHand.subtract(rElbow).normalize().distance(rElbow.subtract(rShoulder).normalize());
-		
-		return d < POINTING_THRESHOLD;
+		return (dry < 0.5 && dR < POINTING_THRESHOLD) || (dly < 0.5 && dL < POINTING_THRESHOLD);
 	}
 	
 	public boolean isPointingAt(RealWorldObject target) {
 		if(!isPointing()) return false;
 
+
+		Point3D tPos = target.getPosition();
+		
 		Point3D rHand = joints.get(Skeleton.HAND_RIGHT);
 		Point3D rShoulder= joints.get(Skeleton.SHOULDER_RIGHT);
 		
-		Point3D tPos = target.getPosition();
 
 		Point3D tPosH = new Point3D(tPos.getX(), 0.0, tPos.getZ());
 		Point3D rhPosH = new Point3D(rHand.getX(), 0.0, rHand.getZ());
-		Point3D rsPosH = new Point3D(rShoulder.getX(), 0.0, rShoulder.getZ());
+		Point3D rsPosH = new Point3D(rShoulder.getX(), 0.0, rShoulder.getZ());		
 		
+		Point3D lHand = joints.get(Skeleton.HAND_LEFT);
+		Point3D lShoulder= joints.get(Skeleton.SHOULDER_LEFT);
+
+		Point3D lhPosH = new Point3D(lHand.getX(), 0.0, lHand.getZ());
+		Point3D lsPosH = new Point3D(lShoulder.getX(), 0.0, lShoulder.getZ());		
+
+		double d2 = tPosH.subtract(lhPosH).normalize().distance(lhPosH.subtract(lsPosH).normalize());
+		if(d2 < POINTING_THRESHOLD && (lHand.getY() - lShoulder.getY() > -0.2)) {
+			return true;
+		}
 		
-		
-		double d2 = tPosH.subtract(rhPosH).normalize().distance(rhPosH.subtract(rsPosH).normalize());
-		if(d2 < POINTING_THRESHOLD) {
+		double d3 = tPosH.subtract(rhPosH).normalize().distance(rhPosH.subtract(rsPosH).normalize());
+		if(d3 < POINTING_THRESHOLD && (rHand.getY() - rShoulder.getY() > -0.2)) {
 			return true;
 		}
 		return false;
+	}
+
+	public boolean isTouching(RealWorldObject target) {
+		Point3D rHand = joints.get(Skeleton.HAND_RIGHT);
+		Point3D lHand = joints.get(Skeleton.HAND_LEFT);
+		
+		Point3D rhPosH = new Point3D(rHand.getX(), 0.0, rHand.getZ());
+		Point3D lhPosH = new Point3D(lHand.getX(), 0.0, lHand.getZ());
+
+		Point3D tPos = target.getPosition();
+		Point3D tPosH = new Point3D(tPos.getX(), 0.0, tPos.getZ());
+		
+		return (rhPosH.distance(tPosH) < USER_TOUCHING_DISTANCE || lhPosH.distance(tPosH) < USER_TOUCHING_DISTANCE);
 	}
 	
 	public void firePointingEvent(RealWorldObject target) {
@@ -185,6 +218,13 @@ public class User extends SkalaObject implements Stated<User.State>{
 		}
 	}
 
+	public void fireTouchingEvent(RealWorldObject target) {
+		for(UserListener listener : this.listeners) {
+			listener.onUserTouch(this, target);
+		}
+	}
+
+	
 	public void fireUserEnterEvent() {
 		for(UserListener listener : this.listeners) {
 			listener.onUserEnter(this);

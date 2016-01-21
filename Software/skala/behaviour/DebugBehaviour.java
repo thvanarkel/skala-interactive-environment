@@ -29,6 +29,12 @@ public class DebugBehaviour extends Behaviour {
 	}
 
 	@Override
+	public void onUserEnter(User u) {
+		// TODO Auto-generated method stub
+//		super.onUserEnter(u);
+	}
+	
+	@Override
 	public void onUserSuddenMove(User u, int joint_id, Point3D direction, double velocity) {
 		// TODO Auto-generated method stub
 
@@ -43,7 +49,7 @@ public class DebugBehaviour extends Behaviour {
 	@Override
 	public void onUserStateTransition(User user, State from, State to) {
 		// TODO Auto-generated method stub
-
+//		super.onUserStateTransition(user, from, to);
 	}
 
 	@Override
@@ -111,7 +117,7 @@ public class DebugBehaviour extends Behaviour {
 	}
 
 	public void onRightClick(Point3D p) {
-		System.out.println("RCLICK");
+		System.out.println("RCLICK");		
 		if(!installation.isCalibrated){
 			System.out.println(installation.getArduinos().get(Math.floorDiv(ladderId,5)));
 			Ladder c = new Ladder((byte) (ladderId % 5), installation.getArduinos().get(Math.floorDiv(ladderId++,5)));
@@ -123,6 +129,16 @@ public class DebugBehaviour extends Behaviour {
 		} else {
 			dU.joints.set(Skeleton.SPINE_MID, p);
 			dU.setData("aura", 1.0);
+			
+			if(testForLadder(p)){
+				System.out.println("HIT");
+				installation.startCalibration();
+				CalibrationBehaviour cb = (CalibrationBehaviour) installation.getBehaviour();
+				Vector<Ladder> q = new Vector<Ladder>();
+				q.add(getClosestLadder(p));
+				cb.setCalibrationQueue(q);
+			}
+			
 		}
 	}
 
@@ -131,7 +147,7 @@ public class DebugBehaviour extends Behaviour {
 		if(testForLadder(p)){
 			System.out.println("HIT");
 			Ladder c = getClosestLadder(p);
-			c.cascade();
+			c.cascade((byte)1);
 		}
 	}
 	
@@ -145,6 +161,12 @@ public class DebugBehaviour extends Behaviour {
 	}
 
 	public void onMove(Point3D p) {
+		
+	}
+
+	@Override
+	public void onUserTouch(User user, RealWorldObject target) {
+		// TODO Auto-generated method stub
 		
 	}
 

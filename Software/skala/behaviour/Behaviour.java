@@ -163,7 +163,21 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 		
 		for(Ladder l: installation.getLadders()){
 			Point3D position = l.getHPosition(1.5);
-			draw(g, position, Color.GREEN, .1);
+			draw(g, position, l.busy ? Color.MAGENTA : Color.GREEN, .1);
+
+			Vector<String> label = new Vector<String>();
+
+			label.add("height: " + l.position.getY());
+			label.add("Id: " + l.getId());
+			
+
+			int x = (int) Math.round(((width / 5.0) * l.position.getX()));
+			int y = (int) Math.round(((height / 5.0) * l.position.getZ()));
+			
+			int r = 0;
+			for(String s : label) {
+				g.drawChars(s.toCharArray(), 0, s.length(), x + 20, y + 20 * r++);
+			}
 		}	
 	};
 	
