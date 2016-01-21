@@ -30,6 +30,7 @@ public class Ladder extends SkalaObject implements Stated<Ladder.State> {
 	
 	public void buzz(){
 		setState(State.Buzzing);
+//		System.out.println("BUZZ");
 		this.arduino.sendBuzz(this.getId(), (byte)90);
 	};
 
@@ -38,7 +39,8 @@ public class Ladder extends SkalaObject implements Stated<Ladder.State> {
 	};
 
 	public void cascade(){
-//		setState(State.Cascading);
+		setState(State.Cascading);
+		this.arduino.sendCascade(this.getId(), (byte)90);
 	};
 	
 	public void stop(){

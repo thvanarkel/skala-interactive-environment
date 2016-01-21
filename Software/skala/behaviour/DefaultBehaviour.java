@@ -6,8 +6,8 @@ import java.util.Vector;
 
 import edu.ufl.digitalworlds.j4k.Skeleton;
 import javafx.geometry.Point3D;
-import javafx.scene.shape.Line;
 import skala.Ladder;
+import skala.Line;
 import skala.RealWorldObject;
 import skala.Skala;
 import skala.User;
@@ -17,22 +17,35 @@ public class DefaultBehaviour extends StatedBehaviour<DefaultBehaviour.State> {
 	public enum State {
 		Normal,
 		Disabled
-	};
+	}
 	
 	public DefaultBehaviour.State state;  
 	
-	final double CALMNESS_VELOCITY_MULTIPLYER = 0.001;
-	final double SUDDENMOVE_VELOCITY_MULTIPLYER = 300;
-	final double MAX_CALMNESS = 1.0;
-	final double MIN_CALMNESS = 0.0;
-	final double CALMNESS_INC = 0.003;
+	static final double CALMNESS_VELOCITY_MULTIPLYER = 0.005;
+	static final double SUDDENMOVE_VELOCITY_MULTIPLYER = 300;
+	static final double MAX_CALMNESS = 1.0;
+	static final double MIN_CALMNESS = 0.0;
+	static final double CALMNESS_INC = 0.002;
 
-	final double USER_MATCH_THRESHOLD = 1.0;
-	final double HDIST_THRESHOLD = 0.30;
+	static final double USER_MATCH_THRESHOLD = 1.0;
+	static final double HDIST_THRESHOLD = 0.30;
+	static final double AURA_SIZE = 2.0;
 	
+	static final double AURA_ACTIVATION_SIZE = 0.05;
 	
+
+	public DefaultBehaviour(Skala installation, Vector<Ladder> ladders) {
+		super(installation, ladders);
+		
+		for(User u : installation.getUsers()) {
+			u.setData("aura", MAX_CALMNESS);
+		}
+		
+		state = DefaultBehaviour.State.Normal;
+	}
+
 	public void tick() {
-		super.tick();
+//		super.tick();
 //		System.out.println(getUsers().size());
 		if(this.getState() != State.Disabled) {
 			long now = System.nanoTime();
@@ -47,9 +60,42 @@ public class DefaultBehaviour extends StatedBehaviour<DefaultBehaviour.State> {
 					}
 					if(u.getState() == User.State.Calming) {
 						u.setData("aura", (Double) u.getData("aura") - CALMNESS_INC);
+						u.setData("aura", Math.min((Double) u.getData("aura"), MAX_CALMNESS));
+						u.setData("aura", Math.max((Double) u.getData("aura"), MIN_CALMNESS));
+						
+						Double aura = (Double) (u.getData("aura")) * AURA_SIZE;
+						
+						for(Ladder l : installation.getLadders()){
+							double d = l.getHPosition(1.5).distance(u.getHPosition(1.5));
+							if(Math.abs(d - aura) < AURA_ACTIVATION_SIZE){
+//								l.buzz();
+							}
+						}
+						if((Double) u.getData("aura") == MIN_CALMNESS){
+							u.setState(User.State.Climaxing);
+						}
 					}
-					u.setData("aura", Math.min((Double) u.getData("aura"), MAX_CALMNESS));
-					u.setData("aura", Math.max((Double) u.getData("aura"), MIN_CALMNESS));
+					if(u.getState() == User.State.Climaxing) {
+						u.setData("aura", (Double) u.getData("aura") + CALMNESS_INC);
+						u.setData("aura", Math.min((Double) u.getData("aura"), MAX_CALMNESS));
+						u.setData("aura", Math.max((Double) u.getData("aura"), MIN_CALMNESS));
+						
+						if((Double) u.getData("aura") == MAX_CALMNESS){
+							u.setState(User.State.Calming);
+						}
+						
+						Double aura = (Double) (u.getData("aura")) * AURA_SIZE;
+						
+						for(Ladder l : installation.getLadders()){
+							double d = l.getHPosition(1.5).distance(u.getHPosition(1.5));
+							if(Math.abs(d - aura) < AURA_ACTIVATION_SIZE){
+//								l.cascade();
+							}
+						}
+					}
+					
+					
+					
 				} else {
 					if((now - u.invalidationTime) / 1e9 > USER_REMOVE_TIME){
 						toDestroy.add(u);
@@ -62,11 +108,6 @@ public class DefaultBehaviour extends StatedBehaviour<DefaultBehaviour.State> {
 		}
 	}
 	
-	public DefaultBehaviour(Skala installation, Vector<Ladder> ladders) {
-		super(installation, ladders);
-		state = DefaultBehaviour.State.Normal;
-	}
-
 	@Override
 	public void onUserEnter(User nU) {
 		System.out.println("USER ENTER " + nU.getId());
@@ -85,48 +126,31 @@ public class DefaultBehaviour extends StatedBehaviour<DefaultBehaviour.State> {
 
 	@Override
 	public void onUserMove(User nU, double velocity) {
-		Point3D hpos2 = nU.joints.get(Skeleton.HEAD);
-		System.out.println("USER MOVE " + hpos2);
-		
-		if(nU.getState() == User.State._Initial){
-			boolean destroy = false;
-			for(User u : installation.getUsers()) {
-				double dist = nU.getPosition().distance(u.getPosition());
-				Point3D hpos1 = u.joints.get(Skeleton.HEAD);
-//				Point3D hpos2 = nU.joints.get(Skeleton.HEAD);
-				
-				double hDist = Math.abs(hpos1.getY() - hpos2.getY());
-				
-				if(!u.isValid()) {
-					if(dist <= USER_MATCH_THRESHOLD && hDist < HDIST_THRESHOLD) {			
-						installation.setStatus("REPLACE " + u.getId() + " WITH " + nU.getId());
-						u.revalidate(nU);
-						destroy = true;
-					}
-				}
-			}
-			if(destroy){
-				installation.removeUser(nU);
-			} 
-		}
+		super.onUserMove(nU, velocity);
 		if(!nU.isValid()) return;
 
 		double calmness = (Double) nU.getData("aura");
-		calmness += velocity * CALMNESS_VELOCITY_MULTIPLYER;
+		if(nU.getState() == User.State.Climaxing) {
+			calmness -= velocity * CALMNESS_VELOCITY_MULTIPLYER;
+		} else if(nU.getState() == User.State.Calming){
+			calmness += velocity * CALMNESS_VELOCITY_MULTIPLYER;
+		}
 		nU.setData("aura", calmness);
 	}
 
 	@Override
 	public void onUserSuddenMove(User u, int joint_id, Point3D direction, double velocity) {
-//		System.out.println("USER SUDDEN MOVE " + u.getId());
+		System.out.println("USER SUDDEN MOVE " + u.getId());
 		if(!u.isValid()) return;
 		Point3D joint = u.joints.get(joint_id);
 		
 		Point3D target = joint.add(direction.multiply(velocity * SUDDENMOVE_VELOCITY_MULTIPLYER));
-		
-		Line l = new Line(joint.getX(), joint.getZ(), target.getX(), target.getZ());
-
-		u.setData("aura", (Double) 1.0);
+		target.dotProduct(1.0, 0.0, 1.0);
+		for(Ladder l : installation.getLadders()){
+			if(target.subtract(u.getHPosition(1.5)).normalize().distance(l.getHPosition().normalize()) < 0.5){
+//				l.buzz();
+			}
+		}
 	}
 
 	@Override
@@ -136,7 +160,12 @@ public class DefaultBehaviour extends StatedBehaviour<DefaultBehaviour.State> {
 		installation.lines.add(line);
 		if(target.getType() == "ladder") {
 			Ladder l = (Ladder) target;
-			l.buzz();
+			double y = user.joints.get(Skeleton.HAND_RIGHT).getY();
+			if(user.joints.get(Skeleton.HAND_RIGHT).distance(l.getHPosition(y)) < 0.1) {
+				l.cascade();
+			} else {
+				l.buzz();
+			}
 		}
 	}
 
@@ -164,9 +193,10 @@ public class DefaultBehaviour extends StatedBehaviour<DefaultBehaviour.State> {
 		
 		for(User u : installation.getUsers()) {
 			double aura = (Double) u.getData("aura");
-			installation.draw(g, u.getPosition(), Color.ORANGE, aura * 3.0);
+			Point3D uPos = u.getHPosition(2);
+			
+			draw(g, uPos, Color.ORANGE, aura * AURA_SIZE);
 		}
-		
 	}
 
 	@Override

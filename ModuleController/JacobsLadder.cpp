@@ -20,7 +20,7 @@ void JacobsLadder::init(int pin, int minPulse, int maxPulse)
 void JacobsLadder::addMovement(MovementType type, int velocity) {
 
   Serial.println(queue.count());
-  if(queue.count() > 15) {
+  if(queue.count() > 1) {
     return;
   }
   

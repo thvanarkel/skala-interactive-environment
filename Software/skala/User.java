@@ -33,9 +33,9 @@ public class User extends SkalaObject implements Stated<User.State>{
 
 	boolean valid = true;
 	
-	public final static double SUDDEN_MOVEMENT_THRESHOLD = 0.005;
-	public final double MOVEMENT_THRESHOLD = 0.0001;
-	public static final double POINTING_THRESHOLD = 0.3; 
+	public final static double SUDDEN_MOVEMENT_THRESHOLD = 8;
+	public final double MOVEMENT_THRESHOLD = 0.1;
+	public static final double POINTING_THRESHOLD = 0.25; 
 	
 	public User(int id) {
 		super();
@@ -93,11 +93,12 @@ public class User extends SkalaObject implements Stated<User.State>{
 				Point3D direction = getDirection(i);
 				if(jointTrackingStates[i] == Skeleton.TRACKED){
 					if(velocity > SUDDEN_MOVEMENT_THRESHOLD) {
+						System.out.println(velocity);
 						this.fireUserSuddenMoveEvent(i, direction, velocity);
 					}
-					
 				}
 			}
+			joints.set(i, point.midpoint(previousJoints.get(i)));
 		}
 		
 		this.setPosition(joints.get(Skeleton.SPINE_MID));
@@ -120,9 +121,13 @@ public class User extends SkalaObject implements Stated<User.State>{
 	public boolean isValid() {
 		return this.getState() != State.Invalid;
 	}
-	
+
 	public void addListener(UserListener l) {
 		listeners.add(l);
+	}
+
+	public void removeListener(UserListener l) {
+		listeners.removeElement(l);
 	}
 
 	@Override
@@ -146,7 +151,8 @@ public class User extends SkalaObject implements Stated<User.State>{
 		Point3D rHand = joints.get(Skeleton.HAND_RIGHT);
 		Point3D rElbow = joints.get(Skeleton.ELBOW_RIGHT);
 		Point3D rShoulder= joints.get(Skeleton.SHOULDER_RIGHT);
-
+		
+		
 		double d = rHand.subtract(rElbow).normalize().distance(rElbow.subtract(rShoulder).normalize());
 		
 		return d < POINTING_THRESHOLD;
@@ -156,10 +162,17 @@ public class User extends SkalaObject implements Stated<User.State>{
 		if(!isPointing()) return false;
 
 		Point3D rHand = joints.get(Skeleton.HAND_RIGHT);
-		Point3D rElbow = joints.get(Skeleton.ELBOW_RIGHT);
 		Point3D rShoulder= joints.get(Skeleton.SHOULDER_RIGHT);
 		
-		double d2 = target.getPosition().subtract(rHand).normalize().distance(rHand.subtract(rShoulder).normalize());
+		Point3D tPos = target.getPosition();
+
+		Point3D tPosH = new Point3D(tPos.getX(), 0.0, tPos.getZ());
+		Point3D rhPosH = new Point3D(rHand.getX(), 0.0, rHand.getZ());
+		Point3D rsPosH = new Point3D(rShoulder.getX(), 0.0, rShoulder.getZ());
+		
+		
+		
+		double d2 = tPosH.subtract(rhPosH).normalize().distance(rhPosH.subtract(rsPosH).normalize());
 		if(d2 < POINTING_THRESHOLD) {
 			return true;
 		}

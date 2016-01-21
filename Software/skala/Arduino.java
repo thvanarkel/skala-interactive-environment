@@ -10,7 +10,7 @@ import jssc.SerialPortEvent;
 import jssc.SerialPortException;
 
 public class Arduino implements jssc.SerialPortEventListener {
-	Vector<Ladder> ladders;
+	private Vector<Ladder> ladders;
 	
 	public String address;
 
@@ -30,7 +30,7 @@ public class Arduino implements jssc.SerialPortEventListener {
 	public Arduino(String address) {
 		this.address = address;
 		this.listeners = new Vector<Skala>();
-		this.ladders = new Vector<Ladder>();
+		this.setLadders(new Vector<Ladder>());
 		this.msgPatterns = new HashMap<Pattern, String>();
 
 		this.msgPatterns.put(newLadderPattern, "addLadder");
@@ -71,7 +71,7 @@ public class Arduino implements jssc.SerialPortEventListener {
 	
 	public void sendBuzz(byte address, byte velocity) {
 		byte[] message = {address, 0, velocity};
-		System.out.println("SENDBUZZ " + message[0] + message[1] + message[2]);
+//		System.out.println("SENDBUZZ " + message[0] + message[1] + message[2]);
 		try {
 			this.serialPort.writeBytes(message);
 		} catch (SerialPortException e) {
@@ -80,8 +80,17 @@ public class Arduino implements jssc.SerialPortEventListener {
 		}
 	}
 	
+	public void sendCascade(byte address, byte velocity) {
+		byte[] message = {address, 2, velocity};
+		try {
+			this.serialPort.writeBytes(message);
+		} catch (SerialPortException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public boolean hasLadder(int id) {
-		for(Ladder l : ladders) {
+		for(Ladder l : getLadders()) {
 			if(l.getId() == id) return true;
 		}
 		return false;
@@ -92,7 +101,7 @@ public class Arduino implements jssc.SerialPortEventListener {
 	}
 	
 	public Ladder getLadder(int id) {
-		for(Ladder l : ladders) {
+		for(Ladder l : getLadders()) {
 			if(l.getId() == id) return l;
 		}
 		return null;
@@ -137,7 +146,7 @@ public class Arduino implements jssc.SerialPortEventListener {
 	
 	public Ladder addLadder(Ladder l) {
 		if(!hasLadder(l.getId())) {
-			this.ladders.addElement(l);
+			this.getLadders().addElement(l);
 			for(Skala listener : this.listeners) {
 				listener.newLadderEvent(l);
 			}
@@ -180,5 +189,15 @@ public class Arduino implements jssc.SerialPortEventListener {
 			}
 			l.serialEvent(event);
 		}	
+	}
+
+
+	public Vector<Ladder> getLadders() {
+		return ladders;
+	}
+
+
+	public void setLadders(Vector<Ladder> ladders) {
+		this.ladders = ladders;
 	}	
 }

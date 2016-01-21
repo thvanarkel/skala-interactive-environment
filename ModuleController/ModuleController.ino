@@ -28,7 +28,7 @@ boolean stringComplete = false; //Indicates the incoming command is complete and
 ///  DEBUG/CALIBRATION  ///
 ///////////////////////////
 
-const bool debugging = true;
+const bool debugging = false;
 byte currentLadder = 0;
 
 void setup() {
@@ -80,19 +80,20 @@ void loop() {
     }
     updateLadders();
     return;
-  }
+  } 
 
   // TODO: Read input from computer over serial
-//  if (Serial.available() > 0) {
-//    byte message[3];
-//    Serial.readBytesUntil(';', message, 3);
-//    byte index = message[0];
-//    MovementType type = (MovementType) message[1];
-//    byte velocity = message[2];
-////    Serial.print(message[0]);
-////    Serial.println(';');
-//    ladders[index]->addMovement(type, velocity);
-//  }
+  if (Serial.available() > 0) {
+    byte message[3];
+    Serial.readBytesUntil(';', message, 3);
+    byte index = message[0];
+    MovementType type = (MovementType) message[1];
+    byte velocity = message[2];
+//    Serial.print(message[0]);
+//    Serial.println(';');
+    ladders[index]->addMovement(type, velocity);
+  }
+  
 //  if (Serial.available() > 0) {
 //    char c = Serial.read();
 //    if (c == 'a') {
