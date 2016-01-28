@@ -84,7 +84,7 @@ public class DebugBehaviour extends Behaviour {
 
 	private boolean testForLadder(Point3D p) {
 		double d = Double.POSITIVE_INFINITY;
-		for(Ladder l : installation.getLadders()) {
+		for(Ladder l : getInstallation().getLadders()) {
 			double ld = l.getHPosition(1.5).distance(p);
 			if(ld < d){
 				d = ld;
@@ -96,7 +96,7 @@ public class DebugBehaviour extends Behaviour {
 	private Ladder getClosestLadder(Point3D p) {
 		Ladder c = null;
 		double d = Double.POSITIVE_INFINITY;
-		for(Ladder l : installation.getLadders()) {
+		for(Ladder l : getInstallation().getLadders()) {
 			
 			double ld = l.getHPosition(1.5).distance(p);
 			if(ld < d){
@@ -118,13 +118,13 @@ public class DebugBehaviour extends Behaviour {
 
 	public void onRightClick(Point3D p) {
 		System.out.println("RCLICK");		
-		if(!installation.isCalibrated){
-			System.out.println(installation.getArduinos().get(Math.floorDiv(ladderId,5)));
-			Ladder c = new Ladder((byte) (ladderId % 5), installation.getArduinos().get(Math.floorDiv(ladderId++,5)));
+		if(!getInstallation().isCalibrated){
+			System.out.println(getInstallation().getArduinos().get(Math.floorDiv(ladderId,5)));
+			Ladder c = new Ladder((byte) (ladderId % 5), getInstallation().getArduinos().get(Math.floorDiv(ladderId++,5)));
 			c.setPosition(p);
-			installation.getLadders().add(c);
+			getInstallation().getLadders().add(c);
 			if(ladderId == 10){
-				installation.isCalibrated = true;
+				getInstallation().isCalibrated = true;
 			}
 		} else {
 			dU.joints.set(Skeleton.SPINE_MID, p);
@@ -132,8 +132,8 @@ public class DebugBehaviour extends Behaviour {
 			
 			if(testForLadder(p)){
 				System.out.println("HIT");
-				installation.startCalibration();
-				CalibrationBehaviour cb = (CalibrationBehaviour) installation.getBehaviour();
+				getInstallation().startCalibration();
+				CalibrationBehaviour cb = (CalibrationBehaviour) getInstallation().getBehaviour();
 				Vector<Ladder> q = new Vector<Ladder>();
 				q.add(getClosestLadder(p));
 				cb.setCalibrationQueue(q);

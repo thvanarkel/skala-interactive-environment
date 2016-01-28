@@ -8,10 +8,18 @@ import skala.Ladder;
 import skala.RealWorldObject;
 import skala.Skala;
 import skala.Stated;
+import skala.StatedListener;
 import skala.User;
 
 public abstract class StatedBehaviour<S> extends Behaviour implements Stated<S> {
 
+
+	protected Vector<StatedListener<S>> listeners;
+	
+	public void addListener(StatedListener<S> listener) {
+		listeners.add(listener);
+	}
+	
 	public enum State {
 		Normal,
 		Disabled
@@ -21,6 +29,7 @@ public abstract class StatedBehaviour<S> extends Behaviour implements Stated<S> 
 	
 	public StatedBehaviour(Skala installation) {
 		super(installation);
+		this.listeners = new Vector<StatedListener<S>>();
 	}
 
 	public StatedBehaviour(Skala installation, Vector<Ladder> ladders) {
@@ -36,11 +45,8 @@ public abstract class StatedBehaviour<S> extends Behaviour implements Stated<S> 
 
 	@Override
 	public void fireStateTransitionEvent(S from, S to) {
-		this.onStateTransition(from, to);
+		for(StatedListener<S> l : listeners) {
+			l.onStateTransitionEvent(this, from, to);
+		}
 	}
-
-	private void onStateTransition(S from, S to) {
-		// TODO Auto-generated method stub
-	}
-
 }

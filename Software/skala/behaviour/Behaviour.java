@@ -19,16 +19,16 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 	private Vector<User> users;
 	Vector<Ladder> ladders;
 	
-	Skala installation;
+	private Skala installation;
 
 	final double USER_INVALIDATE_TIME = 0.5;
 	final double USER_REMOVE_TIME = 3.0;
 
-	final double USER_MATCH_THRESHOLD = 1.0;
-	final double HDIST_THRESHOLD = 0.30;
+	final double USER_MATCH_THRESHOLD = 2.0;
+	final double HDIST_THRESHOLD = 2.0;
 	
 	public Behaviour(Skala installation) {
-		this.installation = installation;
+		this.setInstallation(installation);
 
 		this.setUsers(new Vector<User>());
 		this.ladders = new Vector<Ladder>();
@@ -36,15 +36,15 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 	
 	public Behaviour(Skala installation, Vector<Ladder> ladders) {
 		this.ladders = ladders;
-		this.installation = installation;
+		this.setInstallation(installation);
 	}
 
 	public void draw(Graphics g, Point3D pos, Color color, double size) {
 
 		g.setColor(color);
 		
-		int width = installation.getWidth();
-		int height = installation.getHeight();
+		int width = getInstallation().getWidth();
+		int height = getInstallation().getHeight();
 		
 		double z = pos.getY();
 		
@@ -61,8 +61,8 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 
 		g.setColor(color);
 		
-		int width = installation.getWidth();
-		int height = installation.getHeight();
+		int width = getInstallation().getWidth();
+		int height = getInstallation().getHeight();
 		
 		int x1 = (int) Math.round(((width / 5.0) * (from.getX())));
 		int y1 = (int) Math.round(((height / 5.0) * (from.getZ())));
@@ -78,8 +78,8 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 	public void tick(){};
 	public void paint(Graphics g) {
 
-		int width = installation.getWidth();
-		int height = installation.getHeight();
+		int width = getInstallation().getWidth();
+		int height = getInstallation().getHeight();
 		
 		if(!getUsers().isEmpty()){
 			Vector<User> invalids = new Vector<User>();
@@ -151,17 +151,13 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 			}
 		}
 		
-		for(Sensor s : installation.getSensors()) {
+		for(Sensor s : getInstallation().getSensors()) {
 			draw(g, s.getPosition(), Color.RED, 0.05);
 			draw(g, s.getPosition(), Color.RED, 0.10);
 			draw(g, s.getPosition(), Color.RED, 0.15);
 		}
-//		
-//		draw(g, kinect2.getPosition(), Color.RED, 0.05);
-//		draw(g, kinect2.getPosition(), Color.RED, 0.10);
-//		draw(g, kinect2.getPosition(), Color.RED, 0.15);
 		
-		for(Ladder l: installation.getLadders()){
+		for(Ladder l: getInstallation().getLadders()){
 			Point3D position = l.getHPosition(1.5);
 			draw(g, position, l.busy ? Color.MAGENTA : Color.GREEN, .1);
 
@@ -196,13 +192,29 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 		}
 		return candidate;
 	}
+	
+	public Ladder getFarthestLadder(RealWorldObject from) {
+		Ladder candidate = null;
+		Double maxDistance = Double.NEGATIVE_INFINITY;
+		
+		Point3D origin = from.getPosition();
+		
+		for(Ladder l : getInstallation().getLadders()) {
+			double dist = origin.distance(l.getPosition());
+			if(dist > maxDistance) {
+				candidate = l;
+				maxDistance = dist;
+			}
+		}
+		return candidate;
+	}
 
 	public Vector<User> getUsers() {
-		return installation.getUsers();
+		return getInstallation().getUsers();
 	}
 
 	public void setUsers(Vector<User> users) {
-		installation.setUsers(users);
+		getInstallation().setUsers(users);
 	}	
 
 	public void onUserEnter(User u) {
@@ -213,14 +225,18 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 		
 	}
 	
-	
 	public void onUserMove(User nU, double velocity) {
 		Point3D hpos2 = nU.joints.get(Skeleton.HEAD);
 //		System.out.println("USER MOVE " + hpos2);
 		
+		if(nU.joints.get(Skeleton.HEAD).getY() > 2.2) {
+			nU.invalidate();
+			getInstallation().removeUser(nU);
+		}
+		
 		if(nU.getState() == User.State._Initial){
 			boolean destroy = false;
-			for(User u : installation.getUsers()) {
+			for(User u : getInstallation().getUsers()) {
 				double dist = nU.getPosition().distance(u.getPosition());
 				Point3D hpos1 = u.joints.get(Skeleton.HEAD);
 				
@@ -228,17 +244,25 @@ public abstract class Behaviour implements UserListener, SkalaListener{
 				
 				if(!u.isValid()) {
 					if(dist <= USER_MATCH_THRESHOLD && hDist < HDIST_THRESHOLD) {			
-						installation.setStatus("REPLACE " + u.getId() + " WITH " + nU.getId());
+						getInstallation().setStatus("REPLACE " + u.getId() + " WITH " + nU.getId());
 						u.revalidate(nU);
 						destroy = true;
 					}
 				}
 			}
 			if(destroy){
-				installation.removeUser(nU);
+				getInstallation().removeUser(nU);
 			} 
 		}
 
+	}
+
+	public Skala getInstallation() {
+		return installation;
+	}
+
+	public void setInstallation(Skala installation) {
+		this.installation = installation;
 	}
 	
 }

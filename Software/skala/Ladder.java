@@ -5,10 +5,12 @@ import java.util.Vector;
 public class Ladder extends SkalaObject implements Stated<Ladder.State> {	
 
 	static String type = "ladder";
+	public long lockTime;
 
 	public boolean busy;
 	
-	private Vector<StatedListener> listeners;
+	private Vector<LadderListener> listeners;
+	
 	
 	public enum MovementType
 	{
@@ -28,11 +30,12 @@ public class Ladder extends SkalaObject implements Stated<Ladder.State> {
 	public Ladder(byte id, Arduino arduino) {
 		this.setId(id);
 		this.arduino = arduino;
+		this.listeners = new Vector<LadderListener>();
 	}
 	
 	public void buzz(){
 		setState(State.Buzzing);
-//		System.out.println("BUZZ");
+		System.out.println("BUZZ");
 		this.arduino.sendBuzz(this.getId(), (byte)90);
 	};
 
@@ -46,12 +49,16 @@ public class Ladder extends SkalaObject implements Stated<Ladder.State> {
 	};
 	
 	public void cascade(byte speed){
+		if(System.nanoTime() < this.lockTime) {
+			return;
+		}
+		this.lockTime = System.nanoTime() + (long) 3e9;
 		setState(State.Cascading);
+		System.out.println("cascading");
 		this.arduino.sendCascade(this.getId(), speed);
 	};
 	
 	public void stop(){
-//		setState(State.Idle);
 	};
 	
 	@Override
@@ -72,7 +79,9 @@ public class Ladder extends SkalaObject implements Stated<Ladder.State> {
 
 	@Override
 	public void fireStateTransitionEvent(State from, State to) {
-		
+		for(LadderListener sl : listeners){
+			sl.onLadderStateTransitionEvent(this, from, to);
+		}
 	}
 
 	public byte getId() {

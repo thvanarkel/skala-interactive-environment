@@ -6,7 +6,7 @@
 ///   SETUP VARIABLES   ///
 ///////////////////////////
 
-const int MODULE_ID = 0;
+const int MODULE_ID = 0;  // voor de leuk
 const int NUM_LADDERS = 5;
 const int PINS[NUM_LADDERS] = {2,3,7,5,6};
 
@@ -28,7 +28,7 @@ boolean stringComplete = false; //Indicates the incoming command is complete and
 ///  DEBUG/CALIBRATION  ///
 ///////////////////////////
 
-const bool debugging = false;
+const bool debugging = true;
 byte currentLadder = 0;
 
 void setup() {
@@ -39,7 +39,7 @@ void setup() {
 
   for (int i = 0; i < NUM_LADDERS; i++) {
     JacobsLadder* ladder = new JacobsLadder;
-    ladder->init(i, PINS[i], 500, 2500);
+    ladder->init(i, PINS[i], 550, 2450);
     ladders[i] = ladder;
     Serial.print("L");
     Serial.print(i);

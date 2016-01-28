@@ -32,9 +32,9 @@ public class CalibrationBehaviour extends Behaviour {
 		}
 		
 		setCalibrationQueue(new Vector<Ladder>(ladders));
-		ladders = new Vector<Ladder>();
 		
 		calibratingLadder = getCalibrationQueue().firstElement();
+		calibratingLadder.buzz();
 		
 		installation.isCalibrated = false;
 		installation.isCalibrating = true;
@@ -44,11 +44,20 @@ public class CalibrationBehaviour extends Behaviour {
 	public void tick(){
 		super.tick();
 		
-		if(!user.isValid()) {
-			user = installation.getUsers().firstElement();
+		if(this.user == null) {
+			return;
 		}
 		
-		if(running) {
+		if(!this.user.isValid()) {
+			for(User u : getInstallation().getUsers()){
+				if(u.isValid()){
+					this.user = u;
+				} else {
+					getInstallation().removeUser(u);
+				}
+			}
+		}
+		
 			Point3D rFootPos = user.joints.get(Skeleton.HAND_RIGHT);
 			Point3D lFootPos = user.joints.get(Skeleton.HAND_LEFT);
 			
@@ -60,29 +69,28 @@ public class CalibrationBehaviour extends Behaviour {
 			} else {
 				calibratingLadder.position = lHandPos;
 			}	
-		}
+		
 	}
 
 	@Override
 	public void onUserEnter(User u) {
 		super.onUserEnter(u);
-		if(installation.getUsers().size() == 1) {
-			this.user = u;
-			installation.setStatus("Calibration continued");
-			this.running = true;
-		}
+		this.user = u;
+
+		calibratingLadder.buzz();
 	}
 
 	@Override
 	public void onUserExit(User u) {
 		super.onUserExit(u);
-		installation.removeUser(u);
-		if(installation.getUsers().size() == 0) {
-			installation.setStatus("Calibration paused");
+		getInstallation().removeUser(u);
+		
+		if(getInstallation().getUsers().size() == 0) {
+			getInstallation().setStatus("Calibration paused");
 			this.running = false;
 		} else {
 			if(u.getId() == user.getId()) {
-				user = installation.getUsers().firstElement();
+				user = getInstallation().getUsers().firstElement();
 			}
 		}
 	}
@@ -125,16 +133,15 @@ public class CalibrationBehaviour extends Behaviour {
 	}
 
 	public void capture() {
-		installation.getLadders().add(calibratingLadder);
+		getInstallation().getLadders().add(calibratingLadder);
 		getCalibrationQueue().remove(calibratingLadder);
 		if(!getCalibrationQueue().isEmpty()){
 			calibratingLadder = getCalibrationQueue().firstElement();
 			calibratingLadder.buzz();
 		} else {
-			installation.setIsCalibrated(true);
-			installation.setBehaviour(new DefaultBehaviour(installation, installation.getLadders()));
+			getInstallation().setIsCalibrated(true);
+			getInstallation().setBehaviour(new DefaultBehaviour(getInstallation()));
 		}
-		
 	}
 
 	public Vector<Ladder> getCalibrationQueue() {

@@ -36,7 +36,7 @@ public class User extends SkalaObject implements Stated<User.State>{
 	public static final double SUDDEN_MOVEMENT_THRESHOLD = 8;
 	public static final double MOVEMENT_THRESHOLD = 0.1;
 	public static final double POINTING_THRESHOLD = 0.3; 
-	public static final double USER_TOUCHING_DISTANCE = 0.1; 
+	public static final double USER_TOUCHING_DISTANCE = 0.3; 
 	
 	public User(int id) {
 		super();
@@ -94,12 +94,12 @@ public class User extends SkalaObject implements Stated<User.State>{
 				Point3D direction = getDirection(i);
 				if(jointTrackingStates[i] == Skeleton.TRACKED){
 					if(velocity > SUDDEN_MOVEMENT_THRESHOLD) {
-						System.out.println(velocity);
+//						System.out.println(velocity);
 						this.fireUserSuddenMoveEvent(i, direction, velocity);
 					}
 				}
 			}
-			joints.set(i, point.midpoint(previousJoints.get(i)));
+			joints.set(i, point.midpoint(this.previousJoints.get(i)));
 		}
 		
 		this.setPosition(joints.get(Skeleton.SPINE_MID));
@@ -247,7 +247,7 @@ public class User extends SkalaObject implements Stated<User.State>{
 	}
 
 	public void invalidate() {
-		System.out.println("INVALIDATE");
+//		System.out.println("INVALIDATE");
 		this.invalidationTime = System.nanoTime();
 		this.setState(State.Invalid);
 	}
